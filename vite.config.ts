@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
@@ -6,13 +6,16 @@ export default defineConfig({
     host: '0.0.0.0',
   },
   build: {
-    minify: 'terser',
+    minify: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          phaser: ['phaser'],
+        manualChunks(id) {
+          if (id.includes('phaser')) {
+            return 'phaser';
+          }
+          return undefined;
         },
       },
     },
   },
-})
+});

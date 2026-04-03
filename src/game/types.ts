@@ -101,3 +101,60 @@ export interface VictoryCondition {
   description: string;
   check: string;  // 조건 표현식 (런타임에 eval 또는 함수로)
 }
+
+// ===== 전투 시스템 =====
+
+/** 전투 결과 */
+export interface BattleResult {
+  victor: 'attacker' | 'defender';
+  attackerLosses: number;
+  defenderLosses: number;
+  territoryConquered: boolean;
+  log: string;
+}
+
+// ===== AI 시스템 =====
+
+/** AI 성향 */
+export type AIPersonality = 'aggressive' | 'balanced' | 'defensive';
+
+/** AI 행동 종류 */
+export type AIActionType = 'develop' | 'recruit' | 'attack' | 'diplomacy';
+
+/** AI 행동 결과 */
+export interface AIAction {
+  type: AIActionType;
+  description: string;
+  targetTerritory?: string;  // 대상 영토 ID
+  value?: number;            // 수치 변화
+}
+
+// ===== 외교 시스템 =====
+
+/** 외교 관계 */
+export interface DiplomaticRelation {
+  factionA: string;
+  factionB: string;
+  value: number;  // -100(적대) ~ 100(동맹)
+}
+
+/** 교역 제안 */
+export interface TradeProposal {
+  from: string;       // 제안 세력 ID
+  to: string;         // 대상 세력 ID
+  offer: Partial<Resources>;
+  demand: Partial<Resources>;
+}
+
+/** 교역 결과 */
+export interface TradeResult {
+  accepted: boolean;
+  reason: string;
+}
+
+/** 동맹 제안 결과 */
+export interface AllianceResult {
+  accepted: boolean;
+  newRelationValue: number;
+  reason: string;
+}

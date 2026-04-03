@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { TitleScene } from './scenes/TitleScene';
 import { MapScene } from './scenes/MapScene';
 import { UIScene } from './scenes/UIScene';
 
@@ -9,7 +10,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: 720,
   parent: 'app',
   backgroundColor: '#1a1a2e',
-  scene: [BootScene, MapScene, UIScene],
+  scene: [BootScene, TitleScene, MapScene, UIScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

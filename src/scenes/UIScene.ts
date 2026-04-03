@@ -6,6 +6,8 @@ export class UIScene extends Phaser.Scene {
   private mapScene!: Phaser.Scene;
   private panel!: Phaser.GameObjects.Container;
   private eventPanel!: Phaser.GameObjects.Container;
+  private logPanel!: Phaser.GameObjects.Container;
+  private logTexts: Phaser.GameObjects.Text[] = [];
 
   constructor() {
     super({ key: 'UIScene' });
@@ -29,6 +31,9 @@ export class UIScene extends Phaser.Scene {
     this.eventPanel = this.add.container(640, 360);
     this.eventPanel.setVisible(false);
 
+    // 하단 로그 패널
+    this.createLogPanel();
+
     // "턴 종료" 버튼
     this.createButton(1180, 690, '⏭️ 턴 종료', () => {
       (this.mapScene as any).nextTurn();
@@ -47,6 +52,12 @@ export class UIScene extends Phaser.Scene {
     mapScene.events.on('game-event', (event: GameEvent) => {
       this.showEventModal(event);
     });
+
+    mapScene.events.on('log-updated', () => {
+      this.refreshLogPanel(true);
+    });
+
+    this.refreshLogPanel(false);
   }
 
   private createButton(x: number, y: number, text: string, callback: () => void) {
@@ -92,6 +103,55 @@ export class UIScene extends Phaser.Scene {
     return text;
   }
 
+  private createLogPanel() {
+    this.logPanel = this.add.container(20, 596);
+
+    const bg = this.add.rectangle(0, 0, 820, 104, 0x0f1a2d, 0.92)
+      .setStrokeStyle(1, 0xf0c040, 0.45)
+      .setOrigin(0);
+    const title = this.add.text(14, 10, '연대기', {
+      fontSize: '13px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    });
+
+    this.logPanel.add([bg, title]);
+
+    for (let i = 0; i < 3; i++) {
+      const text = this.add.text(16, 34 + i * 22, '', {
+        fontSize: '13px',
+        color: '#d8e0ec',
+        fontFamily: 'sans-serif',
+        wordWrap: { width: 786 },
+      });
+      this.logTexts.push(text);
+      this.logPanel.add(text);
+    }
+  }
+
+  private refreshLogPanel(animate: boolean) {
+    const recentLogs = this.gameState.log.slice(-3);
+
+    this.logTexts.forEach((text, index) => {
+      const value = recentLogs[index] ?? '';
+      text.setText(value);
+
+      if (!animate || !value) {
+        text.setAlpha(1);
+        return;
+      }
+
+      text.setAlpha(0);
+      this.tweens.add({
+        targets: text,
+        alpha: 1,
+        duration: 260,
+        delay: index * 40,
+        ease: 'Sine.Out',
+      });
+    });
+  }
+
   private showTerritoryPanel(territory: Territory) {
     this.panel.setVisible(true);
 
@@ -134,6 +194,7 @@ export class UIScene extends Phaser.Scene {
         if (faction && faction.resources.gold >= 10) {
           faction.resources.gold -= 10;
           territory.development.agriculture = Math.min(100, territory.development.agriculture + 10);
+          (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${territory.name}의 농업이 정비되었습니다.`);
           this.showTerritoryPanel(territory);
           this.updateResourcePanel();
         }
@@ -144,6 +205,7 @@ export class UIScene extends Phaser.Scene {
         if (faction && faction.resources.food >= 10) {
           faction.resources.food -= 10;
           territory.development.commerce = Math.min(100, territory.development.commerce + 10);
+          (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${territory.name}의 상업 기반이 확장되었습니다.`);
           this.showTerritoryPanel(territory);
           this.updateResourcePanel();
         }
@@ -154,6 +216,7 @@ export class UIScene extends Phaser.Scene {
         if (faction && faction.resources.food >= 15) {
           faction.resources.food -= 15;
           territory.garrison += 1000;
+          (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${territory.name}에서 병력 1,000명을 징집했습니다.`);
           this.showTerritoryPanel(territory);
           this.updateResourcePanel();
         }
@@ -164,6 +227,7 @@ export class UIScene extends Phaser.Scene {
         if (faction && faction.resources.gold >= 10) {
           faction.resources.gold -= 10;
           territory.development.defense = Math.min(100, territory.development.defense + 10);
+          (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${territory.name}의 방어 시설이 강화되었습니다.`);
           this.showTerritoryPanel(territory);
           this.updateResourcePanel();
         }
@@ -254,7 +318,7 @@ export class UIScene extends Phaser.Scene {
           }
           this.updateResourcePanel();
           this.eventPanel.setVisible(false);
-          this.gameState.log.push(`[이벤트] ${event.title}: ${choice.resultText}`);
+          (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${event.title} - ${choice.resultText}`);
         });
 
         this.eventPanel.add([btnBg, btnText]);
