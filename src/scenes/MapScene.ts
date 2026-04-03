@@ -22,7 +22,7 @@ type NavigationDirection = 'up' | 'down' | 'left' | 'right';
 export class MapScene extends Phaser.Scene {
   private gameState: GameState | null = null;
   private territorySprites: Map<string, TerritoryVisual> = new Map();
-  private connectionLines: Phaser.GameObjects.Line[] = [];
+
   private infoText!: Phaser.GameObjects.Text;
   private selectedFactionId: string = SCENARIO_CIVILIZATIONS.factions[0].id;
   private selectedTerritoryId: string | null = null;
@@ -65,7 +65,7 @@ export class MapScene extends Phaser.Scene {
     this.drawTerritories();
 
     this.add.text(640, 25, `🏛️ ${scenario.title}`, {
-      fontSize: '24px',
+      fontSize: '28px',
       color: '#f0c040',
       fontFamily: 'Georgia, serif',
     }).setOrigin(0.5);
@@ -101,6 +101,7 @@ export class MapScene extends Phaser.Scene {
   private drawConnections() {
     const territories = this.gameState.territories;
     const drawn = new Set<string>();
+    const graphics = this.add.graphics();
 
     for (const t of territories) {
       for (const adjId of t.adjacentTo) {
@@ -111,11 +112,37 @@ export class MapScene extends Phaser.Scene {
         const adj = territories.find((tt) => tt.id === adjId);
         if (!adj) continue;
 
-        const line = this.add.line(0, 0, t.x, t.y, adj.x, adj.y, 0x47617b, 0.52)
-          .setOrigin(0)
-          .setLineWidth(2, 2);
-        this.connectionLines.push(line);
+        // 점선 스타일 연결선
+        this.drawDashedLine(graphics, t.x, t.y, adj.x, adj.y, 6, 4, 0x47617b, 0.52);
       }
+    }
+  }
+
+  /** 점선을 그리는 헬퍼 */
+  private drawDashedLine(
+    graphics: Phaser.GameObjects.Graphics,
+    x1: number, y1: number, x2: number, y2: number,
+    dashSize: number, gapSize: number,
+    color: number, alpha: number,
+  ) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const stepSize = dashSize + gapSize;
+    const steps = Math.floor(dist / stepSize);
+    const ux = dx / dist;
+    const uy = dy / dist;
+
+    graphics.lineStyle(2, color, alpha);
+    for (let i = 0; i < steps; i++) {
+      const sx = x1 + ux * i * stepSize;
+      const sy = y1 + uy * i * stepSize;
+      const ex = sx + ux * dashSize;
+      const ey = sy + uy * dashSize;
+      graphics.beginPath();
+      graphics.moveTo(sx, sy);
+      graphics.lineTo(ex, ey);
+      graphics.strokePath();
     }
   }
 
@@ -143,9 +170,9 @@ export class MapScene extends Phaser.Scene {
       const height = Math.max(...ys) - Math.min(...ys) + 140;
       const accent = Phaser.Display.Color.IntegerToColor(faction.color).brighten(35).color;
 
-      graphics.fillStyle(accent, 0.1);
+      graphics.fillStyle(accent, 0.22);
       graphics.fillEllipse(centerX, centerY, width, height);
-      graphics.lineStyle(1, accent, 0.2);
+      graphics.lineStyle(1, accent, 0.35);
       graphics.strokeEllipse(centerX, centerY, width, height);
     }
   }
@@ -157,7 +184,8 @@ export class MapScene extends Phaser.Scene {
         ? Phaser.Display.Color.IntegerToColor(faction.color).brighten(30).color
         : 0x7a8594;
 
-      const points = [-28, -6, -16, -22, 16, -22, 28, -6, 28, 12, 0, 26, -28, 12];
+      // 도시 아이콘 +15% 확대
+      const points = [-32, -7, -18, -25, 18, -25, 32, -7, 32, 14, 0, 30, -32, 14];
       const container = this.add.container(territory.x, territory.y);
       const glow = this.add.polygon(0, 0, points, color, 0.18)
         .setStrokeStyle(3, 0xf7e2a0, 0)
@@ -165,11 +193,11 @@ export class MapScene extends Phaser.Scene {
         .setVisible(false);
       const base = this.add.polygon(0, 0, points, color, 0.9)
         .setStrokeStyle(2, 0xf4edd8, 0.65);
-      const banner = this.add.rectangle(0, -5, 26, 10, 0xf0c040, 0.95)
+      const banner = this.add.rectangle(0, -6, 30, 12, 0xf0c040, 0.95)
         .setStrokeStyle(1, 0x34290a, 0.55);
-      const keep = this.add.rectangle(0, 2, 14, 18, 0x203248, 0.92)
+      const keep = this.add.rectangle(0, 2, 16, 21, 0x203248, 0.92)
         .setStrokeStyle(1, 0xffffff, 0.25);
-      const gate = this.add.rectangle(0, 8, 6, 10, 0x08111d, 0.95);
+      const gate = this.add.rectangle(0, 9, 7, 12, 0x08111d, 0.95);
 
       const nameText = this.add.text(0, -40, territory.name, {
         fontSize: '13px',
@@ -188,8 +216,8 @@ export class MapScene extends Phaser.Scene {
       }).setOrigin(0.5);
 
       container.add([glow, base, banner, keep, gate, nameText, garrisonText]);
-      container.setSize(74, 74);
-      container.setInteractive(new Phaser.Geom.Circle(0, 0, 34), Phaser.Geom.Circle.Contains);
+      container.setSize(84, 84);
+      container.setInteractive(new Phaser.Geom.Circle(0, 0, 40), Phaser.Geom.Circle.Contains);
 
       container.on('pointerdown', () => {
         this.onTerritoryClick(territory);
@@ -391,24 +419,9 @@ export class MapScene extends Phaser.Scene {
     return SCENARIO_CIVILIZATIONS.startYear + Math.floor(turn / 12);
   }
 
+  /** 턴 정보 갱신 (UIScene이 'log-updated' 이벤트로 갱신하므로 빈 구현) */
   private updateTurnInfo() {
-    const yearStr = this.gameState.year < 0
-      ? `기원전 ${Math.abs(this.gameState.year)}년`
-      : `${this.gameState.year}년`;
-
-    const faction = this.gameState.factions.find((f) => f.id === this.gameState.currentFaction);
-    const turnText = `턴 ${this.gameState.turn} | ${yearStr} | ${faction?.name || ''} 차례 | [${this.gameState.phase}]`;
-
-    const existing = this.children.getByName('turnInfo');
-    if (existing) existing.destroy();
-
-    this.add.text(1260, 25, turnText, {
-      fontSize: '14px',
-      color: '#b4d6f6',
-      fontFamily: 'monospace',
-      backgroundColor: '#10203a',
-      padding: { x: 8, y: 4 },
-    }).setOrigin(1, 0.5).setName('turnInfo');
+    // 턴/연대 정보는 UIScene 상단 메뉴바에 통합 표시
   }
 
   public nextTurn() {
