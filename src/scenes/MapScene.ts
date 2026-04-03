@@ -5,6 +5,7 @@ import { SCENARIO_CIVILIZATIONS } from '../data/scenario_civilizations';
 import type { GameState, Territory, Faction } from '../game/types';
 import { executeAITurn } from '../game/ai';
 import { decayAllRelations } from '../game/diplomacy';
+import { FACTION_ICON_MAP } from '../utils/svgIconLoader';
 
 interface MapSceneInitData {
   selectedFactionId?: string;
@@ -177,108 +178,40 @@ export class MapScene extends Phaser.Scene {
     }
   }
 
-  /** 문명별 특색 있는 도시 아이콘을 그린다 */
-  private drawCityIcon(graphics: Phaser.GameObjects.Graphics, x: number, y: number, factionId: string | null) {
-    if (factionId === 'mesopotamia') {
-      // 지구라트: 3단 계단 피라미드
-      graphics.fillStyle(0xc4956a, 1);
-      graphics.fillRect(x - 20, y + 2, 40, 12);       // 하단
-      graphics.fillStyle(0x9e7548, 1);
-      graphics.fillRect(x - 14, y - 6, 28, 10);       // 중단
-      graphics.fillStyle(0xf0c040, 1);
-      graphics.fillRect(x - 8, y - 14, 16, 8);         // 상단
-      // 꼭대기 깃발
-      graphics.lineStyle(2, 0xf0c040, 0.9);
-      graphics.beginPath();
-      graphics.moveTo(x, y - 14);
-      graphics.lineTo(x, y - 24);
-      graphics.strokePath();
-      graphics.fillStyle(0xf0c040, 1);
-      graphics.fillTriangle(x, y - 24, x + 8, y - 20, x, y - 16);
-    } else if (factionId === 'egypt') {
-      // 피라미드 + 오벨리스크
-      graphics.fillStyle(0xd4a574, 1);
-      graphics.fillTriangle(x - 20, y + 10, x, y - 18, x + 20, y + 10);
-      // 오벨리스크
-      graphics.fillStyle(0xc0c0c0, 1);
-      graphics.fillRect(x + 22, y - 10, 4, 20);
-      graphics.fillTriangle(x + 22, y - 10, x + 24, y - 16, x + 26, y - 10);
-      // 나일강 표현
-      graphics.lineStyle(2, 0x4488cc, 0.6);
-      graphics.beginPath();
-      graphics.moveTo(x - 24, y + 12);
-      graphics.lineTo(x + 28, y + 12);
-      graphics.strokePath();
-    } else if (factionId === 'indus') {
-      // 정돈된 도시 격자 (외벽 + 건물 + 대욕장)
-      graphics.fillStyle(0xc45c3d, 1);
-      graphics.fillRect(x - 18, y - 14, 36, 28);       // 외벽
-      graphics.fillStyle(0xd47a5a, 1);
-      graphics.fillRect(x - 14, y - 10, 10, 8);         // 건물 1
-      graphics.fillRect(x + 4, y - 10, 10, 8);          // 건물 2
-      graphics.fillRect(x - 6, y + 2, 12, 8);           // 건물 3
-      // 대욕장
-      graphics.fillStyle(0x4488cc, 1);
-      graphics.fillRect(x + 6, y + 4, 8, 6);
-    } else if (factionId === 'yellow_river') {
-      // 중국식 궁전 지붕
-      graphics.fillStyle(0xe03030, 1);
-      graphics.fillTriangle(x - 22, y - 2, x, y - 16, x + 22, y - 2);
-      // 처마 끝 올림 (좌우 곡선 흉내)
-      graphics.lineStyle(3, 0xe03030, 1);
-      graphics.beginPath();
-      graphics.moveTo(x - 22, y - 2);
-      graphics.lineTo(x - 26, y - 6);
-      graphics.strokePath();
-      graphics.beginPath();
-      graphics.moveTo(x + 22, y - 2);
-      graphics.lineTo(x + 26, y - 6);
-      graphics.strokePath();
-      // 건물 본체
-      graphics.fillStyle(0xb02020, 1);
-      graphics.fillRect(x - 15, y - 2, 30, 15);
-      // 기둥 2개
-      graphics.fillStyle(0xf0c040, 0.8);
-      graphics.fillRect(x - 10, y - 2, 3, 15);
-      graphics.fillRect(x + 7, y - 2, 3, 15);
-    } else {
-      // 무소속: 기존 육각형 유지 (회색)
-      graphics.fillStyle(0x7a8594, 0.8);
-      const pts = [-20, -5, -12, -16, 12, -16, 20, -5, 20, 9, 0, 18, -20, 9];
-      graphics.beginPath();
-      graphics.moveTo(x + pts[0], y + pts[1]);
-      for (let i = 2; i < pts.length; i += 2) {
-        graphics.lineTo(x + pts[i], y + pts[i + 1]);
-      }
-      graphics.closePath();
-      graphics.fillPath();
-    }
-  }
-
   private drawTerritories() {
-    // 문명별 도시 아이콘 그래픽 레이어
-    const cityGraphics = this.add.graphics();
-
     for (const territory of this.gameState.territories) {
       const faction = this.gameState.factions.find((f) => f.id === territory.owner);
       const color = faction
         ? Phaser.Display.Color.IntegerToColor(faction.color).brighten(30).color
         : 0x7a8594;
 
-      // glow 효과용 육각형 (선택/호버 시 빛남)
+      // 도시 아이콘 (성곽 폴리곤)
       const points = [-32, -7, -18, -25, 18, -25, 32, -7, 32, 14, 0, 30, -32, 14];
       const container = this.add.container(territory.x, territory.y);
       const glow = this.add.polygon(0, 0, points, color, 0.18)
         .setStrokeStyle(3, 0xf7e2a0, 0)
         .setScale(1.3)
         .setVisible(false);
-      // 투명 base (히트 영역 + glow 색상 참조용)
-      const base = this.add.polygon(0, 0, points, color, 0)
-        .setStrokeStyle(0, 0x000000, 0);
-      const banner = this.add.rectangle(0, 0, 0, 0, 0x000000, 0); // 빈 더미 (인터페이스 호환)
+      const base = this.add.polygon(0, 0, points, color, 0.9)
+        .setStrokeStyle(2, 0xf4edd8, 0.65);
+      const banner = this.add.rectangle(0, -6, 30, 12, 0xf0c040, 0.95)
+        .setStrokeStyle(1, 0x34290a, 0.55);
+      const keep = this.add.rectangle(0, 2, 16, 21, 0x203248, 0.92)
+        .setStrokeStyle(1, 0xffffff, 0.25);
+      const gate = this.add.rectangle(0, 9, 7, 12, 0x08111d, 0.95);
 
-      // 문명별 아이콘 그리기
-      this.drawCityIcon(cityGraphics, territory.x, territory.y, territory.owner);
+      // SVG 문명 아이콘 오버레이 (해당 세력 아이콘이 있으면 표시)
+      let civIcon: Phaser.GameObjects.Image | null = null;
+      if (faction) {
+        const iconKey = FACTION_ICON_MAP[faction.id];
+        if (iconKey && this.textures.exists(iconKey)) {
+          base.setAlpha(0.3);
+          banner.setAlpha(0.3);
+          keep.setAlpha(0.3);
+          gate.setAlpha(0.3);
+          civIcon = this.add.image(0, 0, iconKey).setDisplaySize(48, 48);
+        }
+      }
 
       const nameText = this.add.text(0, -50, territory.name, {
         fontSize: '13px',
@@ -288,7 +221,7 @@ export class MapScene extends Phaser.Scene {
         strokeThickness: 3,
       }).setOrigin(0.5);
 
-      const garrisonText = this.add.text(0, 45, `⚔️ ${(territory.garrison / 1000).toFixed(1)}k`, {
+      const garrisonText = this.add.text(0, 34, `⚔️ ${(territory.garrison / 1000).toFixed(1)}k`, {
         fontSize: '11px',
         color: '#ffccaf',
         fontFamily: 'monospace',
@@ -296,7 +229,11 @@ export class MapScene extends Phaser.Scene {
         strokeThickness: 2,
       }).setOrigin(0.5);
 
-      container.add([glow, base, banner, nameText, garrisonText]);
+      // 컨테이너에 요소 추가 (civIcon이 있으면 포함)
+      const children: Phaser.GameObjects.GameObject[] = [glow, base, banner, keep, gate];
+      if (civIcon) children.push(civIcon);
+      children.push(nameText, garrisonText);
+      container.add(children);
       container.setSize(84, 84);
       container.setInteractive(new Phaser.Geom.Circle(0, 0, 40), Phaser.Geom.Circle.Contains);
 

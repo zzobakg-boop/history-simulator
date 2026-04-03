@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SCENARIO_CIVILIZATIONS } from '../data/scenario_civilizations';
 import type { Faction } from '../game/types';
+import { FACTION_ICON_MAP } from '../utils/svgIconLoader';
 
 interface FactionCardMeta {
   subtitle: string;
@@ -135,6 +136,12 @@ export class TitleScene extends Phaser.Scene {
       .setStrokeStyle(1, 0xf7deb1, 0.45);
     const emblem = this.add.circle(0, -28, 26, accent, 0.22)
       .setStrokeStyle(2, accent, 0.95);
+    // SVG 문명 아이콘 (텍스처가 있으면 엠블럼 위에 표시)
+    const iconKey = FACTION_ICON_MAP[faction.id];
+    let civIcon: Phaser.GameObjects.Image | null = null;
+    if (iconKey && this.textures.exists(iconKey)) {
+      civIcon = this.add.image(0, -28, iconKey).setDisplaySize(40, 40);
+    }
     const name = this.add.text(0, -93, faction.name, {
       fontSize: '20px',
       color: '#08111d',
@@ -187,7 +194,10 @@ export class TitleScene extends Phaser.Scene {
       this.refreshFactionCards();
     });
 
-    card.add([bg, banner, emblem, name, subtitle, leader, trait, resources]);
+    const elements: Phaser.GameObjects.GameObject[] = [bg, banner, emblem];
+    if (civIcon) elements.push(civIcon);
+    elements.push(name, subtitle, leader, trait, resources);
+    card.add(elements);
     return card;
   }
 

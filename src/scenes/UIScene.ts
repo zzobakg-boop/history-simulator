@@ -3,6 +3,7 @@ import type { Quiz } from '../data/quizzes';
 import type { Territory, GameState, GameEvent, Faction, BattleResult } from '../game/types';
 import { getAttackableTargets, calculateBattle } from '../game/combat';
 import { getRelation, proposeTrade, proposeAlliance } from '../game/diplomacy';
+import { RESOURCE_ICON_MAP } from '../utils/svgIconLoader';
 
 // 삼국지3 색상 팔레트
 const COLORS = {
@@ -229,24 +230,36 @@ export class UIScene extends Phaser.Scene {
 
     // 자원 아이콘+숫자+미니바 (한 줄 레이아웃)
     const resources = [
-      { icon: '🌾', val: r.food, max: 200, color: 0x4CAF50 },
-      { icon: '💰', val: r.gold, max: 200, color: 0xFFC107 },
-      { icon: '🎭', val: r.culture, max: 200, color: 0x9C27B0 },
-      { icon: '⚔️', val: r.military, max: 200, color: 0xF44336 },
-      { icon: '🔬', val: r.technology, max: 200, color: 0x2196F3 },
+      { key: 'food', fallback: '🌾', val: r.food, max: 200, color: 0x4CAF50 },
+      { key: 'gold', fallback: '💰', val: r.gold, max: 200, color: 0xFFC107 },
+      { key: 'culture', fallback: '🎭', val: r.culture, max: 200, color: 0x9C27B0 },
+      { key: 'military', fallback: '⚔️', val: r.military, max: 200, color: 0xF44336 },
+      { key: 'technology', fallback: '🔬', val: r.technology, max: 200, color: 0x2196F3 },
     ];
 
     const barMaxW = 40;
     resources.forEach((res, i) => {
       const x = 10 + i * 56;
 
-      // 아이콘 + 숫자
-      const text = this.add.text(x, 26, `${res.icon}${res.val}`, {
-        fontSize: '12px',
-        color: '#f4edd8',
-        fontFamily: 'monospace',
-      });
-      container.add(text);
+      // SVG 아이콘 텍스처가 있으면 이미지로, 없으면 이모지 텍스트로 표시
+      const iconKey = RESOURCE_ICON_MAP[res.key];
+      if (iconKey && this.textures.exists(iconKey)) {
+        const icon = this.add.image(x + 10, 30, iconKey).setDisplaySize(20, 20).setOrigin(0.5);
+        container.add(icon);
+        const text = this.add.text(x + 22, 24, `${res.val}`, {
+          fontSize: '12px',
+          color: '#f4edd8',
+          fontFamily: 'monospace',
+        });
+        container.add(text);
+      } else {
+        const text = this.add.text(x, 26, `${res.fallback}${res.val}`, {
+          fontSize: '12px',
+          color: '#f4edd8',
+          fontFamily: 'monospace',
+        });
+        container.add(text);
+      }
 
       // 미니 바 (높이 4px)
       const ratio = Math.min(res.val / res.max, 1);
