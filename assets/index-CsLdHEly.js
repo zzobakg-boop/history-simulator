@@ -31,8 +31,79 @@ import { t as require_phaser } from "./phaser-BpsWc7Sg.js";
 	}
 })();
 //#endregion
-//#region src/scenes/BootScene.ts
+//#region src/utils/svgIconLoader.ts
 var import_phaser = /* @__PURE__ */ __toESM(require_phaser(), 1);
+/**
+* SVG 스프라이트 시트에서 각 symbol을 Canvas로 렌더링하여
+* Phaser 텍스처로 등록하는 유틸리티
+*/
+/** 로드할 아이콘 ID 목록 */
+var ICON_IDS = [
+	"icon-mesopotamia",
+	"icon-egypt",
+	"icon-indus",
+	"icon-china",
+	"icon-food",
+	"icon-gold",
+	"icon-culture",
+	"icon-military",
+	"icon-technology",
+	"icon-defense",
+	"icon-agriculture",
+	"icon-commerce",
+	"icon-population"
+];
+/**
+* icons.svg를 fetch하고 각 symbol을 64×64 Canvas에 렌더링 후
+* Phaser 텍스처 매니저에 등록한다.
+*/
+async function loadSvgIcons(textures, basePath) {
+	const url = `${basePath}icons.svg`;
+	const svgText = await (await fetch(url)).text();
+	const svgDoc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+	const promises = ICON_IDS.map((id) => renderSymbolToTexture(svgDoc, id, textures));
+	await Promise.all(promises);
+}
+/** 단일 symbol을 Canvas에 렌더링하여 텍스처로 등록 */
+function renderSymbolToTexture(svgDoc, symbolId, textures) {
+	return new Promise((resolve) => {
+		const symbol = svgDoc.getElementById(symbolId);
+		if (!symbol) {
+			console.warn(`SVG symbol '${symbolId}' 을(를) 찾을 수 없습니다`);
+			resolve();
+			return;
+		}
+		const size = 64;
+		const svgNS = "http://www.w3.org/2000/svg";
+		const wrapperSvg = document.createElementNS(svgNS, "svg");
+		wrapperSvg.setAttribute("xmlns", svgNS);
+		wrapperSvg.setAttribute("width", String(size));
+		wrapperSvg.setAttribute("height", String(size));
+		wrapperSvg.setAttribute("viewBox", symbol.getAttribute("viewBox") ?? "0 0 64 64");
+		for (const child of Array.from(symbol.childNodes)) wrapperSvg.appendChild(child.cloneNode(true));
+		const svgString = new XMLSerializer().serializeToString(wrapperSvg);
+		const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+		const urlObject = URL.createObjectURL(blob);
+		const img = new Image();
+		img.onload = () => {
+			const canvas = document.createElement("canvas");
+			canvas.width = size;
+			canvas.height = size;
+			canvas.getContext("2d").drawImage(img, 0, 0, size, size);
+			URL.revokeObjectURL(urlObject);
+			if (!textures.exists(symbolId)) textures.addCanvas(symbolId, canvas);
+			resolve();
+		};
+		img.onerror = () => {
+			console.warn(`SVG 아이콘 '${symbolId}' 렌더링 실패`);
+			URL.revokeObjectURL(urlObject);
+			resolve();
+		};
+		img.src = urlObject;
+	});
+}
+//#endregion
+//#region src/scenes/BootScene.ts
 var BootScene = class extends import_phaser.default.Scene {
 	constructor() {
 		super({ key: "BootScene" });
@@ -57,7 +128,9 @@ var BootScene = class extends import_phaser.default.Scene {
 		}).setOrigin(.5);
 	}
 	create() {
-		this.scene.start("TitleScene");
+		loadSvgIcons(this.textures, "/history-simulator/").then(() => {
+			this.scene.start("TitleScene");
+		});
 	}
 };
 //#endregion
@@ -196,8 +269,8 @@ var SCENARIO_CIVILIZATIONS = {
 		{
 			id: "ur",
 			name: "우르",
-			x: 580,
-			y: 340,
+			x: 440,
+			y: 400,
 			owner: "mesopotamia",
 			population: 3e4,
 			development: {
@@ -211,8 +284,8 @@ var SCENARIO_CIVILIZATIONS = {
 		{
 			id: "babylon",
 			name: "바빌론",
-			x: 560,
-			y: 300,
+			x: 410,
+			y: 280,
 			owner: "mesopotamia",
 			population: 4e4,
 			development: {
@@ -226,8 +299,8 @@ var SCENARIO_CIVILIZATIONS = {
 		{
 			id: "nineveh",
 			name: "니네베",
-			x: 550,
-			y: 260,
+			x: 480,
+			y: 170,
 			owner: "mesopotamia",
 			population: 25e3,
 			development: {
@@ -236,13 +309,13 @@ var SCENARIO_CIVILIZATIONS = {
 				defense: 60
 			},
 			garrison: 2500,
-			adjacentTo: ["babylon"]
+			adjacentTo: ["babylon", "harappa"]
 		},
 		{
 			id: "memphis",
 			name: "멤피스",
-			x: 440,
-			y: 340,
+			x: 180,
+			y: 250,
 			owner: "egypt",
 			population: 35e3,
 			development: {
@@ -251,13 +324,17 @@ var SCENARIO_CIVILIZATIONS = {
 				defense: 35
 			},
 			garrison: 2e3,
-			adjacentTo: ["thebes", "ur"]
+			adjacentTo: [
+				"thebes",
+				"alexandria",
+				"ur"
+			]
 		},
 		{
 			id: "thebes",
 			name: "테베",
-			x: 450,
-			y: 400,
+			x: 150,
+			y: 380,
 			owner: "egypt",
 			population: 3e4,
 			development: {
@@ -271,8 +348,8 @@ var SCENARIO_CIVILIZATIONS = {
 		{
 			id: "alexandria",
 			name: "알렉산드리아",
-			x: 420,
-			y: 310,
+			x: 240,
+			y: 160,
 			owner: "egypt",
 			population: 2e4,
 			development: {
@@ -281,13 +358,13 @@ var SCENARIO_CIVILIZATIONS = {
 				defense: 40
 			},
 			garrison: 1e3,
-			adjacentTo: ["thebes", "memphis"]
+			adjacentTo: ["memphis", "thebes"]
 		},
 		{
 			id: "harappa",
 			name: "하라파",
-			x: 720,
-			y: 300,
+			x: 670,
+			y: 220,
 			owner: "indus",
 			population: 25e3,
 			development: {
@@ -296,13 +373,13 @@ var SCENARIO_CIVILIZATIONS = {
 				defense: 25
 			},
 			garrison: 1e3,
-			adjacentTo: ["mohenjo-daro"]
+			adjacentTo: ["mohenjo-daro", "nineveh"]
 		},
 		{
 			id: "mohenjo-daro",
 			name: "모헨조다로",
-			x: 710,
-			y: 360,
+			x: 700,
+			y: 380,
 			owner: "indus",
 			population: 3e4,
 			development: {
@@ -311,13 +388,13 @@ var SCENARIO_CIVILIZATIONS = {
 				defense: 30
 			},
 			garrison: 1200,
-			adjacentTo: ["harappa"]
+			adjacentTo: ["harappa", "xian"]
 		},
 		{
 			id: "anyang",
 			name: "안양(殷墟)",
-			x: 920,
-			y: 280,
+			x: 890,
+			y: 180,
 			owner: "yellow_river",
 			population: 28e3,
 			development: {
@@ -331,8 +408,8 @@ var SCENARIO_CIVILIZATIONS = {
 		{
 			id: "luoyang",
 			name: "뤄양",
-			x: 900,
-			y: 310,
+			x: 920,
+			y: 320,
 			owner: "yellow_river",
 			population: 32e3,
 			development: {
@@ -346,8 +423,8 @@ var SCENARIO_CIVILIZATIONS = {
 		{
 			id: "xian",
 			name: "시안(호경)",
-			x: 870,
-			y: 300,
+			x: 850,
+			y: 440,
 			owner: "yellow_river",
 			population: 22e3,
 			development: {
@@ -356,7 +433,11 @@ var SCENARIO_CIVILIZATIONS = {
 				defense: 55
 			},
 			garrison: 1800,
-			adjacentTo: ["anyang", "luoyang"]
+			adjacentTo: [
+				"anyang",
+				"luoyang",
+				"mohenjo-daro"
+			]
 		}
 	],
 	events: [
@@ -1687,7 +1768,86 @@ var MapScene = class extends import_phaser.default.Scene {
 			graphics.strokeEllipse(centerX, centerY, width, height);
 		}
 	}
+	/** 문명별 특색 있는 도시 아이콘을 그린다 */
+	drawCityIcon(graphics, x, y, factionId) {
+		if (factionId === "mesopotamia") {
+			graphics.fillStyle(12883306, 1);
+			graphics.fillRect(x - 20, y + 2, 40, 12);
+			graphics.fillStyle(10384712, 1);
+			graphics.fillRect(x - 14, y - 6, 28, 10);
+			graphics.fillStyle(15777856, 1);
+			graphics.fillRect(x - 8, y - 14, 16, 8);
+			graphics.lineStyle(2, 15777856, .9);
+			graphics.beginPath();
+			graphics.moveTo(x, y - 14);
+			graphics.lineTo(x, y - 24);
+			graphics.strokePath();
+			graphics.fillStyle(15777856, 1);
+			graphics.fillTriangle(x, y - 24, x + 8, y - 20, x, y - 16);
+		} else if (factionId === "egypt") {
+			graphics.fillStyle(13935988, 1);
+			graphics.fillTriangle(x - 20, y + 10, x, y - 18, x + 20, y + 10);
+			graphics.fillStyle(12632256, 1);
+			graphics.fillRect(x + 22, y - 10, 4, 20);
+			graphics.fillTriangle(x + 22, y - 10, x + 24, y - 16, x + 26, y - 10);
+			graphics.lineStyle(2, 4491468, .6);
+			graphics.beginPath();
+			graphics.moveTo(x - 24, y + 12);
+			graphics.lineTo(x + 28, y + 12);
+			graphics.strokePath();
+		} else if (factionId === "indus") {
+			graphics.fillStyle(12868669, 1);
+			graphics.fillRect(x - 18, y - 14, 36, 28);
+			graphics.fillStyle(13924954, 1);
+			graphics.fillRect(x - 14, y - 10, 10, 8);
+			graphics.fillRect(x + 4, y - 10, 10, 8);
+			graphics.fillRect(x - 6, y + 2, 12, 8);
+			graphics.fillStyle(4491468, 1);
+			graphics.fillRect(x + 6, y + 4, 8, 6);
+		} else if (factionId === "yellow_river") {
+			graphics.fillStyle(14692400, 1);
+			graphics.fillTriangle(x - 22, y - 2, x, y - 16, x + 22, y - 2);
+			graphics.lineStyle(3, 14692400, 1);
+			graphics.beginPath();
+			graphics.moveTo(x - 22, y - 2);
+			graphics.lineTo(x - 26, y - 6);
+			graphics.strokePath();
+			graphics.beginPath();
+			graphics.moveTo(x + 22, y - 2);
+			graphics.lineTo(x + 26, y - 6);
+			graphics.strokePath();
+			graphics.fillStyle(11542560, 1);
+			graphics.fillRect(x - 15, y - 2, 30, 15);
+			graphics.fillStyle(15777856, .8);
+			graphics.fillRect(x - 10, y - 2, 3, 15);
+			graphics.fillRect(x + 7, y - 2, 3, 15);
+		} else {
+			graphics.fillStyle(8029588, .8);
+			const pts = [
+				-20,
+				-5,
+				-12,
+				-16,
+				12,
+				-16,
+				20,
+				-5,
+				20,
+				9,
+				0,
+				18,
+				-20,
+				9
+			];
+			graphics.beginPath();
+			graphics.moveTo(x + pts[0], y + pts[1]);
+			for (let i = 2; i < pts.length; i += 2) graphics.lineTo(x + pts[i], y + pts[i + 1]);
+			graphics.closePath();
+			graphics.fillPath();
+		}
+	}
 	drawTerritories() {
+		const cityGraphics = this.add.graphics();
 		for (const territory of this.gameState.territories) {
 			const faction = this.gameState.factions.find((f) => f.id === territory.owner);
 			const color = faction ? import_phaser.default.Display.Color.IntegerToColor(faction.color).brighten(30).color : 8029588;
@@ -1709,18 +1869,17 @@ var MapScene = class extends import_phaser.default.Scene {
 			];
 			const container = this.add.container(territory.x, territory.y);
 			const glow = this.add.polygon(0, 0, points, color, .18).setStrokeStyle(3, 16245408, 0).setScale(1.3).setVisible(false);
-			const base = this.add.polygon(0, 0, points, color, .9).setStrokeStyle(2, 16051672, .65);
-			const banner = this.add.rectangle(0, -6, 30, 12, 15777856, .95).setStrokeStyle(1, 3418378, .55);
-			const keep = this.add.rectangle(0, 2, 16, 21, 2110024, .92).setStrokeStyle(1, 16777215, .25);
-			const gate = this.add.rectangle(0, 9, 7, 12, 528669, .95);
-			const nameText = this.add.text(0, -40, territory.name, {
+			const base = this.add.polygon(0, 0, points, color, 0).setStrokeStyle(0, 0, 0);
+			const banner = this.add.rectangle(0, 0, 0, 0, 0, 0);
+			this.drawCityIcon(cityGraphics, territory.x, territory.y, territory.owner);
+			const nameText = this.add.text(0, -50, territory.name, {
 				fontSize: "13px",
 				color: "#f7f3e7",
 				fontFamily: "sans-serif",
 				stroke: "#08111d",
 				strokeThickness: 3
 			}).setOrigin(.5);
-			const garrisonText = this.add.text(0, 34, `⚔️ ${(territory.garrison / 1e3).toFixed(1)}k`, {
+			const garrisonText = this.add.text(0, 45, `⚔️ ${(territory.garrison / 1e3).toFixed(1)}k`, {
 				fontSize: "11px",
 				color: "#ffccaf",
 				fontFamily: "monospace",
@@ -1731,8 +1890,6 @@ var MapScene = class extends import_phaser.default.Scene {
 				glow,
 				base,
 				banner,
-				keep,
-				gate,
 				nameText,
 				garrisonText
 			]);
@@ -2246,14 +2403,19 @@ var UIScene = class extends import_phaser.default.Scene {
 	createLeaderPanel() {
 		const existing = this.children.getByName("leaderContainer");
 		if (existing) existing.destroy();
-		const container = this.add.container(620, 596).setName("leaderContainer");
+		const container = this.add.container(860, 596).setName("leaderContainer");
 		const playerFaction = this.gameState.factions.find((f) => f.isPlayer);
 		if (!playerFaction) return container;
-		const bg = this.add.rectangle(0, 0, 240, 104, COLORS.darkest, .92).setStrokeStyle(1, 4482696, .6).setOrigin(0);
+		const bg = this.add.rectangle(0, 0, 200, 104, COLORS.darkest, .92).setStrokeStyle(1, 4482696, .6).setOrigin(0);
 		container.add(bg);
-		const overlay = this.add.rectangle(0, 0, 240, 104, playerFaction.color, .08).setOrigin(0);
+		const overlay = this.add.rectangle(0, 0, 200, 104, playerFaction.color, .08).setOrigin(0);
 		container.add(overlay);
-		const icon = this.add.text(16, 12, "👑", { fontSize: "32px" });
+		const icon = this.add.text(16, 12, {
+			mesopotamia: "🏛️",
+			egypt: "🔺",
+			indus: "🏗️",
+			yellow_river: "🏯"
+		}[playerFaction.id] ?? "👑", { fontSize: "32px" });
 		container.add(icon);
 		const nameText = this.add.text(60, 10, playerFaction.name, {
 			fontSize: "16px",

@@ -1,24 +1,216 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-  <symbol id="bluesky-icon" viewBox="0 0 16 17">
-    <g clip-path="url(#bluesky-clip)"><path fill="#08060d" d="M7.75 7.735c-.693-1.348-2.58-3.86-4.334-5.097-1.68-1.187-2.32-.981-2.74-.79C.188 2.065.1 2.812.1 3.251s.241 3.602.398 4.13c.52 1.744 2.367 2.333 4.07 2.145-2.495.37-4.71 1.278-1.805 4.512 3.196 3.309 4.38-.71 4.987-2.746.608 2.036 1.307 5.91 4.93 2.746 2.72-2.746.747-4.143-1.747-4.512 1.702.189 3.55-.4 4.07-2.145.156-.528.397-3.691.397-4.13s-.088-1.186-.575-1.406c-.42-.19-1.06-.395-2.741.79-1.755 1.24-3.64 3.752-4.334 5.099"/></g>
-    <defs><clipPath id="bluesky-clip"><path fill="#fff" d="M.1.85h15.3v15.3H.1z"/></clipPath></defs>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- 문명 아이콘 (4개)                        -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- 메소포타미아: 지구라트 신전 (계단식 피라미드) -->
+  <symbol id="icon-mesopotamia" viewBox="0 0 64 64">
+    <rect x="8" y="44" width="48" height="10" rx="1" fill="#8B6914"/>
+    <rect x="13" y="34" width="38" height="10" rx="1" fill="#A0792A"/>
+    <rect x="18" y="24" width="28" height="10" rx="1" fill="#B8922E"/>
+    <rect x="23" y="14" width="18" height="10" rx="1" fill="#D4A574"/>
+    <rect x="28" y="8" width="8" height="6" rx="1" fill="#F0C040"/>
+    <line x1="8" y1="44" x2="56" y2="44" stroke="#6B4F10" stroke-width="1"/>
+    <line x1="13" y1="34" x2="51" y2="34" stroke="#6B4F10" stroke-width="1"/>
+    <line x1="18" y1="24" x2="46" y2="24" stroke="#6B4F10" stroke-width="1"/>
+    <line x1="23" y1="14" x2="41" y2="14" stroke="#6B4F10" stroke-width="1"/>
+    <circle cx="32" cy="11" r="2" fill="#FFD700"/>
+    <rect x="6" y="54" width="52" height="4" rx="1" fill="#6B4F10"/>
   </symbol>
-  <symbol id="discord-icon" viewBox="0 0 20 19">
-    <path fill="#08060d" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82"/>
+
+  <!-- 이집트: 피라미드 + 나일강 -->
+  <symbol id="icon-egypt" viewBox="0 0 64 64">
+    <path d="M0 50 Q16 46, 32 50 Q48 54, 64 50 L64 64 L0 64 Z" fill="#1565C0" opacity="0.6"/>
+    <path d="M0 53 Q16 49, 32 53 Q48 57, 64 53" stroke="#42A5F5" fill="none" stroke-width="1" opacity="0.5"/>
+    <polygon points="32,8 50,48 14,48" fill="#D4A574"/>
+    <polygon points="32,8 50,48 32,48" fill="#C49A6C"/>
+    <polygon points="48,24 58,48 38,48" fill="#B8922E"/>
+    <polygon points="48,24 58,48 48,48" fill="#A0792A"/>
+    <circle cx="12" cy="14" r="6" fill="#F0C040" opacity="0.9"/>
+    <circle cx="12" cy="14" r="8" fill="#F0C040" opacity="0.2"/>
+    <rect x="0" y="48" width="64" height="3" fill="#E8C97A" opacity="0.5"/>
   </symbol>
-  <symbol id="documentation-icon" viewBox="0 0 21 20">
-    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
-    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
-    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
+
+  <!-- 인더스: 성채 + 대욕장 -->
+  <symbol id="icon-indus" viewBox="0 0 64 64">
+    <rect x="6" y="20" width="52" height="34" rx="2" fill="#A0522D"/>
+    <rect x="6" y="20" width="52" height="5" fill="#8B4513"/>
+    <rect x="6" y="16" width="8" height="6" fill="#A0522D"/>
+    <rect x="18" y="16" width="8" height="6" fill="#A0522D"/>
+    <rect x="30" y="16" width="8" height="6" fill="#A0522D"/>
+    <rect x="42" y="16" width="8" height="6" fill="#A0522D"/>
+    <rect x="16" y="30" width="32" height="16" rx="2" fill="#0D47A1" opacity="0.7"/>
+    <rect x="18" y="32" width="28" height="12" rx="1" fill="#1976D2" opacity="0.8"/>
+    <path d="M20 38 Q25 36, 30 38 Q35 40, 40 38" stroke="#64B5F6" fill="none" stroke-width="1"/>
+    <rect x="12" y="34" width="4" height="3" fill="#CD853F"/>
+    <rect x="12" y="37" width="4" height="3" fill="#CD853F"/>
+    <rect x="12" y="40" width="4" height="3" fill="#CD853F"/>
+    <rect x="4" y="54" width="56" height="4" rx="1" fill="#8B4513"/>
   </symbol>
-  <symbol id="github-icon" viewBox="0 0 19 19">
-    <path fill="#08060d" fill-rule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clip-rule="evenodd"/>
+
+  <!-- 황하: 궁전 (중국 전통 지붕) -->
+  <symbol id="icon-china" viewBox="0 0 64 64">
+    <rect x="10" y="46" width="44" height="6" rx="1" fill="#8B0000"/>
+    <rect x="8" y="52" width="48" height="4" rx="1" fill="#A0522D"/>
+    <rect x="16" y="30" width="4" height="16" fill="#CC0000"/>
+    <rect x="30" y="30" width="4" height="16" fill="#CC0000"/>
+    <rect x="44" y="30" width="4" height="16" fill="#CC0000"/>
+    <rect x="22" y="36" width="8" height="10" rx="1" fill="#4A0000"/>
+    <circle cx="26" cy="42" r="1" fill="#FFD700"/>
+    <path d="M6 30 Q32 18, 58 30 L54 32 Q32 22, 10 32 Z" fill="#006400"/>
+    <path d="M10 32 Q32 22, 54 32" stroke="#228B22" fill="none" stroke-width="1"/>
+    <path d="M18 22 Q32 12, 46 22 L42 24 Q32 16, 22 24 Z" fill="#008000"/>
+    <rect x="30" y="10" width="4" height="6" fill="#FFD700"/>
+    <circle cx="32" cy="9" r="2" fill="#FFD700"/>
+    <circle cx="6" cy="30" r="2" fill="#FFD700" opacity="0.8"/>
+    <circle cx="58" cy="30" r="2" fill="#FFD700" opacity="0.8"/>
   </symbol>
-  <symbol id="social-icon" viewBox="0 0 20 20">
-    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
-    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- 자원 아이콘 (5개)                        -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- 밀 다발 -->
+  <symbol id="icon-food" viewBox="0 0 64 64">
+    <line x1="32" y1="56" x2="32" y2="20" stroke="#8B7355" stroke-width="3"/>
+    <line x1="22" y1="56" x2="28" y2="24" stroke="#8B7355" stroke-width="2"/>
+    <line x1="42" y1="56" x2="36" y2="24" stroke="#8B7355" stroke-width="2"/>
+    <ellipse cx="32" cy="16" rx="4" ry="8" fill="#DAA520"/>
+    <ellipse cx="28" cy="20" rx="3" ry="7" fill="#DAA520" transform="rotate(-15 28 20)"/>
+    <ellipse cx="36" cy="20" rx="3" ry="7" fill="#DAA520" transform="rotate(15 36 20)"/>
+    <ellipse cx="24" cy="26" rx="3" ry="6" fill="#B8860B" transform="rotate(-25 24 26)"/>
+    <ellipse cx="40" cy="26" rx="3" ry="6" fill="#B8860B" transform="rotate(25 40 26)"/>
+    <line x1="32" y1="10" x2="32" y2="8" stroke="#DAA520" stroke-width="1"/>
+    <line x1="28" y1="14" x2="26" y2="12" stroke="#DAA520" stroke-width="1"/>
+    <line x1="36" y1="14" x2="38" y2="12" stroke="#DAA520" stroke-width="1"/>
+    <ellipse cx="32" cy="48" rx="12" ry="3" fill="none" stroke="#A0522D" stroke-width="2"/>
   </symbol>
-  <symbol id="x-icon" viewBox="0 0 19 19">
-    <path fill="#08060d" fill-rule="evenodd" d="M1.893 1.98c.052.072 1.245 1.769 2.653 3.77l2.892 4.114c.183.261.333.48.333.486s-.068.089-.152.183l-.522.593-.765.867-3.597 4.087c-.375.426-.734.834-.798.905a1 1 0 0 0-.118.148c0 .01.236.017.664.017h.663l.729-.83c.4-.457.796-.906.879-.999a692 692 0 0 0 1.794-2.038c.034-.037.301-.34.594-.675l.551-.624.345-.392a7 7 0 0 1 .34-.374c.006 0 .93 1.306 2.052 2.903l2.084 2.965.045.063h2.275c1.87 0 2.273-.003 2.266-.021-.008-.02-1.098-1.572-3.894-5.547-2.013-2.862-2.28-3.246-2.273-3.266.008-.019.282-.332 2.085-2.38l2-2.274 1.567-1.782c.022-.028-.016-.03-.65-.03h-.674l-.3.342a871 871 0 0 1-1.782 2.025c-.067.075-.405.458-.75.852a100 100 0 0 1-.803.91c-.148.172-.299.344-.99 1.127-.304.343-.32.358-.345.327-.015-.019-.904-1.282-1.976-2.808L6.365 1.85H1.8zm1.782.91 8.078 11.294c.772 1.08 1.413 1.973 1.425 1.984.016.017.241.02 1.05.017l1.03-.004-2.694-3.766L7.796 5.75 5.722 2.852l-1.039-.004-1.039-.004z" clip-rule="evenodd"/>
+
+  <!-- 금화 더미 -->
+  <symbol id="icon-gold" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="48" rx="18" ry="6" fill="#B8860B"/>
+    <ellipse cx="32" cy="46" rx="18" ry="6" fill="#DAA520"/>
+    <ellipse cx="32" cy="46" rx="14" ry="4" fill="#FFD700"/>
+    <ellipse cx="30" cy="38" rx="16" ry="5" fill="#B8860B"/>
+    <ellipse cx="30" cy="36" rx="16" ry="5" fill="#DAA520"/>
+    <ellipse cx="30" cy="36" rx="12" ry="3" fill="#FFD700"/>
+    <ellipse cx="34" cy="28" rx="14" ry="5" fill="#B8860B"/>
+    <ellipse cx="34" cy="26" rx="14" ry="5" fill="#DAA520"/>
+    <ellipse cx="34" cy="26" rx="10" ry="3" fill="#FFD700"/>
+    <ellipse cx="32" cy="18" rx="10" ry="4" fill="#B8860B"/>
+    <ellipse cx="32" cy="16" rx="10" ry="4" fill="#F0C040"/>
+    <circle cx="40" cy="14" r="2" fill="#FFFACD" opacity="0.6"/>
   </symbol>
+
+  <!-- 두루마리 (문화) -->
+  <symbol id="icon-culture" viewBox="0 0 64 64">
+    <rect x="14" y="14" width="36" height="36" rx="2" fill="#F5DEB3"/>
+    <rect x="14" y="14" width="36" height="36" rx="2" fill="none" stroke="#D2B48C" stroke-width="1"/>
+    <ellipse cx="32" cy="14" rx="20" ry="4" fill="#DEB887"/>
+    <ellipse cx="32" cy="14" rx="20" ry="3" fill="#F5DEB3"/>
+    <circle cx="12" cy="14" r="4" fill="#D2B48C"/>
+    <circle cx="52" cy="14" r="4" fill="#D2B48C"/>
+    <circle cx="12" cy="14" r="2" fill="#C4A882"/>
+    <circle cx="52" cy="14" r="2" fill="#C4A882"/>
+    <ellipse cx="32" cy="50" rx="20" ry="4" fill="#DEB887"/>
+    <ellipse cx="32" cy="50" rx="20" ry="3" fill="#F5DEB3"/>
+    <circle cx="12" cy="50" r="4" fill="#D2B48C"/>
+    <circle cx="52" cy="50" r="4" fill="#D2B48C"/>
+    <circle cx="12" cy="50" r="2" fill="#C4A882"/>
+    <circle cx="52" cy="50" r="2" fill="#C4A882"/>
+    <line x1="20" y1="24" x2="44" y2="24" stroke="#8B7355" stroke-width="1.5"/>
+    <line x1="20" y1="30" x2="40" y2="30" stroke="#8B7355" stroke-width="1.5"/>
+    <line x1="20" y1="36" x2="42" y2="36" stroke="#8B7355" stroke-width="1.5"/>
+    <line x1="20" y1="42" x2="36" y2="42" stroke="#8B7355" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- 교차된 검 (군사) -->
+  <symbol id="icon-military" viewBox="0 0 64 64">
+    <line x1="14" y1="50" x2="44" y2="10" stroke="#C0C0C0" stroke-width="4" stroke-linecap="round"/>
+    <line x1="14" y1="50" x2="44" y2="10" stroke="#E8E8E8" stroke-width="2" stroke-linecap="round"/>
+    <rect x="10" y="42" width="14" height="4" rx="1" fill="#8B0000" transform="rotate(-53 17 44)"/>
+    <circle cx="17" cy="44" r="2" fill="#FFD700"/>
+    <line x1="50" y1="50" x2="20" y2="10" stroke="#C0C0C0" stroke-width="4" stroke-linecap="round"/>
+    <line x1="50" y1="50" x2="20" y2="10" stroke="#E8E8E8" stroke-width="2" stroke-linecap="round"/>
+    <rect x="40" y="42" width="14" height="4" rx="1" fill="#8B0000" transform="rotate(53 47 44)"/>
+    <circle cx="47" cy="44" r="2" fill="#FFD700"/>
+    <circle cx="44" cy="10" r="3" fill="#FFFFFF" opacity="0.4"/>
+    <circle cx="20" cy="10" r="3" fill="#FFFFFF" opacity="0.4"/>
+  </symbol>
+
+  <!-- 톱니바퀴+나침반 (기술) -->
+  <symbol id="icon-technology" viewBox="0 0 64 64">
+    <circle cx="26" cy="34" r="12" fill="#CD853F"/>
+    <circle cx="26" cy="34" r="8" fill="#D2691E"/>
+    <circle cx="26" cy="34" r="4" fill="#8B6914"/>
+    <rect x="23" y="18" width="6" height="6" fill="#CD853F"/>
+    <rect x="23" y="44" width="6" height="6" fill="#CD853F"/>
+    <rect x="10" y="31" width="6" height="6" fill="#CD853F"/>
+    <rect x="36" y="31" width="6" height="6" fill="#CD853F"/>
+    <rect x="13" y="21" width="5" height="5" fill="#CD853F" transform="rotate(45 15.5 23.5)"/>
+    <rect x="34" y="21" width="5" height="5" fill="#CD853F" transform="rotate(45 36.5 23.5)"/>
+    <rect x="13" y="40" width="5" height="5" fill="#CD853F" transform="rotate(45 15.5 42.5)"/>
+    <rect x="34" y="40" width="5" height="5" fill="#CD853F" transform="rotate(45 36.5 42.5)"/>
+    <circle cx="44" cy="24" r="12" fill="none" stroke="#B8860B" stroke-width="2"/>
+    <circle cx="44" cy="24" r="10" fill="#1A1A2E" opacity="0.8"/>
+    <polygon points="44,14 46,24 44,22 42,24" fill="#CC0000"/>
+    <polygon points="44,34 42,24 44,26 46,24" fill="#E8E8E8"/>
+    <circle cx="44" cy="24" r="2" fill="#FFD700"/>
+  </symbol>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- UI 아이콘 (4개)                          -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- 방패 (방어) -->
+  <symbol id="icon-defense" viewBox="0 0 64 64">
+    <path d="M32 6 L54 16 L54 34 Q54 50, 32 58 Q10 50, 10 34 L10 16 Z" fill="#1565C0"/>
+    <path d="M32 6 L54 16 L54 34 Q54 50, 32 58" fill="#1976D2"/>
+    <path d="M32 12 L48 20 L48 33 Q48 46, 32 52 Q16 46, 16 33 L16 20 Z" fill="none" stroke="#64B5F6" stroke-width="1.5"/>
+    <path d="M32 20 L38 28 L32 36 L26 28 Z" fill="#42A5F5"/>
+    <circle cx="32" cy="28" r="4" fill="#BBDEFB"/>
+    <circle cx="32" cy="28" r="2" fill="#E3F2FD"/>
+  </symbol>
+
+  <!-- 쟁기+밭 (농업) -->
+  <symbol id="icon-agriculture" viewBox="0 0 64 64">
+    <rect x="6" y="40" width="52" height="18" rx="2" fill="#2E7D32" opacity="0.5"/>
+    <line x1="6" y1="46" x2="58" y2="46" stroke="#4CAF50" stroke-width="1" opacity="0.6"/>
+    <line x1="6" y1="52" x2="58" y2="52" stroke="#4CAF50" stroke-width="1" opacity="0.6"/>
+    <path d="M14 40 Q14 34, 18 36 Q14 32, 14 40" fill="#66BB6A"/>
+    <path d="M26 40 Q26 33, 30 35 Q26 31, 26 40" fill="#66BB6A"/>
+    <path d="M38 40 Q38 34, 42 36 Q38 32, 38 40" fill="#4CAF50"/>
+    <path d="M50 40 Q50 34, 54 36 Q50 32, 50 40" fill="#66BB6A"/>
+    <line x1="12" y1="16" x2="40" y2="36" stroke="#8D6E63" stroke-width="3" stroke-linecap="round"/>
+    <path d="M38 34 L50 28 L44 40 Z" fill="#78909C"/>
+    <line x1="12" y1="16" x2="8" y2="12" stroke="#8D6E63" stroke-width="2" stroke-linecap="round"/>
+    <line x1="12" y1="16" x2="16" y2="10" stroke="#8D6E63" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 저울+동전 (상업) -->
+  <symbol id="icon-commerce" viewBox="0 0 64 64">
+    <rect x="30" y="14" width="4" height="36" fill="#B8860B"/>
+    <rect x="24" y="50" width="16" height="4" rx="1" fill="#8B6914"/>
+    <line x1="10" y1="18" x2="54" y2="18" stroke="#DAA520" stroke-width="3"/>
+    <line x1="14" y1="18" x2="10" y2="32" stroke="#DAA520" stroke-width="1.5"/>
+    <line x1="14" y1="18" x2="22" y2="32" stroke="#DAA520" stroke-width="1.5"/>
+    <path d="M8 32 Q16 36, 24 32" stroke="#DAA520" fill="#B8860B" stroke-width="1.5"/>
+    <line x1="50" y1="18" x2="42" y2="30" stroke="#DAA520" stroke-width="1.5"/>
+    <line x1="50" y1="18" x2="54" y2="30" stroke="#DAA520" stroke-width="1.5"/>
+    <path d="M40 30 Q48 34, 56 30" stroke="#DAA520" fill="#B8860B" stroke-width="1.5"/>
+    <circle cx="16" cy="30" r="4" fill="#FFD700"/>
+    <polygon points="32,10 28,16 36,16" fill="#FFD700"/>
+  </symbol>
+
+  <!-- 사람 그룹 (인구) -->
+  <symbol id="icon-population" viewBox="0 0 64 64">
+    <circle cx="32" cy="20" r="7" fill="#78909C"/>
+    <path d="M20 54 Q20 34, 32 34 Q44 34, 44 54 Z" fill="#607D8B"/>
+    <circle cx="16" cy="24" r="6" fill="#90A4AE"/>
+    <path d="M6 54 Q6 38, 16 38 Q26 38, 26 54 Z" fill="#78909C"/>
+    <circle cx="48" cy="24" r="6" fill="#90A4AE"/>
+    <path d="M38 54 Q38 38, 48 38 Q58 38, 58 54 Z" fill="#78909C"/>
+  </symbol>
+
 </svg>
