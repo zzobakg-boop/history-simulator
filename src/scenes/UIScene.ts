@@ -15,6 +15,7 @@ export class UIScene extends Phaser.Scene {
   private logPanel!: Phaser.GameObjects.Container;
   private logTexts: Phaser.GameObjects.Text[] = [];
   private quizCloseTimer?: Phaser.Time.TimerEvent;
+  // 상단 메뉴바/리더 패널은 생성만 하면 되므로 별도 필드에 보관하지 않는다.
 
   constructor() {
     super({ key: 'UIScene' });
@@ -26,6 +27,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   create() {
+    // 상단 삼국지3 스타일 메뉴바
+    this.createMenuBar();
+
     // 우측 사이드 패널 배경
     this.panel = this.add.container(1050, 60);
     const panelBg = this.add.rectangle(0, 0, 220, 580, 0x16213e, 0.9)
@@ -64,8 +68,12 @@ export class UIScene extends Phaser.Scene {
       this.showDiplomacyPanel();
     });
 
-    // 자원 패널 (상단 좌측)
+    // 자원 패널 (상단 좌측) + 연대/턴 정보 패널
     this.updateResourcePanel();
+    this.updateTurnPanel();
+
+    // 플레이어 세력 리더 패널 (하단 우측)
+    this.createLeaderPanel();
 
     // MapScene 이벤트 리스닝
     const mapScene = this.scene.get('MapScene');
@@ -83,6 +91,12 @@ export class UIScene extends Phaser.Scene {
 
     mapScene.events.on('log-updated', () => {
       this.refreshLogPanel(true);
+      this.updateTurnPanel();
+    });
+
+    // 상단 메뉴바와 숫자 키 입력 연동
+    mapScene.events.on('menu-command', (digit: number) => {
+      this.handleMenuCommand(digit);
     });
 
     this.refreshLogPanel(false);
@@ -202,16 +216,32 @@ export class UIScene extends Phaser.Scene {
       });
       this.panel.add(t);
       y += t.height + 6;
+      return t;
     };
 
     addText(`📍 ${territory.name}`, '#f0c040', '18px');
     addText(`소유: ${faction?.name || '무소속'}`, '#aaaaaa');
     addText(`인구: ${territory.population.toLocaleString()}명`);
     addText(`──────────────`, '#334466');
-    addText(`🌾 농업: ${territory.development.agriculture}/100`);
-    addText(`💰 상업: ${territory.development.commerce}/100`);
-    addText(`🛡️ 방어: ${territory.development.defense}/100`);
-    addText(`⚔️ 병력: ${territory.garrison.toLocaleString()}명`);
+
+    // 개발도/병력을 삼국지 스타일의 가로 바 그래프로 시각화한다.
+    const agText = addText(`🌾 농업: ${territory.development.agriculture}/100`);
+    this.createStatBar(territory.development.agriculture, 100, agText.y + agText.height + 2);
+    y += 10;
+
+    const comText = addText(`💰 상업: ${territory.development.commerce}/100`);
+    this.createStatBar(territory.development.commerce, 100, comText.y + comText.height + 2, 0x7cb5ff);
+    y += 10;
+
+    const defText = addText(`🛡️ 방어: ${territory.development.defense}/100`);
+    this.createStatBar(territory.development.defense, 100, defText.y + defText.height + 2, 0xffd27c);
+    y += 10;
+
+    const garText = addText(`⚔️ 병력: ${territory.garrison.toLocaleString()}명`);
+    // 병력은 최대치가 없으므로 대략적인 전력감을 주는 상대적 바를 사용한다.
+    const garrisonScale = Math.min(territory.garrison / 5000, 1); // 5,000명을 기준으로 100%로 환산
+    this.createStatBar(garrisonScale * 100, 100, garText.y + garText.height + 2, 0xff9da3);
+    y += 10;
 
     if (isOwn) {
       addText(`──────────────`, '#334466');
@@ -767,5 +797,146 @@ export class UIScene extends Phaser.Scene {
     return Object.entries(reward)
       .map(([key, value]) => `${rewardLabels[key as keyof Quiz['reward']]} +${value}`)
       .join(', ');
+  }
+
+  /** 상단 삼국지3 스타일 메뉴바를 생성한다. */
+  private createMenuBar() {
+    const container = this.add.container(0, 0);
+
+    const menuDefs: { digit: number; label: string }[] = [
+      { digit: 0, label: '휴양' },
+      { digit: 1, label: '군사' },
+      { digit: 2, label: '인사' },
+      { digit: 3, label: '외교' },
+      { digit: 4, label: '정보' },
+      { digit: 5, label: '개발' },
+      { digit: 6, label: '계략' },
+      { digit: 7, label: '상인' },
+      { digit: 8, label: '특별' },
+      { digit: 9, label: '기능' },
+    ];
+
+    const startX = 40;
+    const baseY = 18;
+    const gapX = 118;
+
+    menuDefs.forEach((menu, index) => {
+      const row = index < 5 ? 0 : 1;
+      const col = index % 5;
+      const x = startX + col * gapX;
+      const y = baseY + row * 26;
+
+      const bg = this.add.rectangle(x, y, 112, 20, 0x16213e, 0.92)
+        .setStrokeStyle(1, 0x3a4a6a, 0.8)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add.text(x, y, `${menu.digit}. ${menu.label}`, {
+        fontSize: '12px',
+        color: '#f0f4ff',
+        fontFamily: 'monospace',
+      }).setOrigin(0.5);
+
+      bg.on('pointerover', () => bg.setFillStyle(0x203555));
+      bg.on('pointerout', () => bg.setFillStyle(0x16213e));
+      bg.on('pointerdown', () => {
+        this.handleMenuCommand(menu.digit);
+      });
+
+      container.add([bg, label]);
+    });
+
+    return container;
+  }
+
+  /** 숫자 키 또는 메뉴 클릭으로 들어온 명령을 처리한다. */
+  private handleMenuCommand(digit: number) {
+    const mapScene = this.scene.get('MapScene') as any;
+
+    switch (digit) {
+      case 3: // 외교
+        this.showDiplomacyPanel();
+        break;
+      default:
+        mapScene?.addLog?.(`턴 ${this.gameState.turn}: [메뉴 ${digit}] 명령을 준비 중입니다.`);
+        break;
+    }
+  }
+
+  /** 개발도/병력을 나타내는 가로 바 그래프를 그린다. */
+  private createStatBar(value: number, max: number, y: number, color: number = 0x7cffbf) {
+    const clamped = Phaser.Math.Clamp(value, 0, max);
+    const ratio = max > 0 ? clamped / max : 0;
+    const width = 180 * ratio;
+
+    const bg = this.add.rectangle(15 + 90, y + 4, 180, 6, 0x0b1524, 0.9)
+      .setStrokeStyle(1, 0x233552, 0.8)
+      .setOrigin(0.5, 0.5);
+    const fill = this.add.rectangle(15 + 90 - (180 - width) / 2, y + 4, width, 4, color, 0.95)
+      .setOrigin(0.5, 0.5);
+
+    this.panel.add([bg, fill]);
+  }
+
+  /** 연대/턴 정보를 좌측 상단 패널로 표시한다. */
+  private updateTurnPanel() {
+    const existing = this.children.getByName('turnPanel');
+    if (existing) existing.destroy();
+
+    const yearStr = this.gameState.year < 0
+      ? `기원전 ${Math.abs(this.gameState.year)}년`
+      : `${this.gameState.year}년`;
+    const currentFaction = this.gameState.factions.find(f => f.id === this.gameState.currentFaction);
+    const text = `턴 ${this.gameState.turn} | ${yearStr} | ${currentFaction?.name ?? ''}`;
+
+    const panel = this.add.text(20, 20, text, {
+      fontSize: '13px',
+      color: '#b4d6f6',
+      fontFamily: 'monospace',
+      backgroundColor: '#10203a',
+      padding: { x: 8, y: 4 },
+    }).setName('turnPanel');
+
+    // 다른 UI보다 뒤로 깔리지 않도록 맨 위로 올린다.
+    this.children.bringToTop(panel);
+  }
+
+  /** 플레이어 세력 리더 정보를 하단 우측에 표시한다. */
+  private createLeaderPanel() {
+    const container = this.add.container(880, 596);
+    const playerFaction = this.gameState.factions.find(f => f.isPlayer);
+    if (!playerFaction) return container;
+
+    const bg = this.add.rectangle(0, 0, 360, 104, 0x0f1a2d, 0.9)
+      .setStrokeStyle(1, 0x446688, 0.6)
+      .setOrigin(0, 0);
+
+    const title = this.add.text(12, 10, '👑 세력 정보', {
+      fontSize: '13px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    });
+
+    const nameText = this.add.text(18, 36, `${playerFaction.name}`, {
+      fontSize: '18px',
+      color: '#ffffff',
+      fontFamily: 'sans-serif',
+    });
+
+    const territories = this.gameState.territories.filter(t => t.owner === playerFaction.id);
+    const totalGarrison = territories.reduce((sum, t) => sum + t.garrison, 0);
+
+    const infoText = this.add.text(18, 64, `영토 ${territories.length}개 | 병력 ${totalGarrison.toLocaleString()}명`, {
+      fontSize: '12px',
+      color: '#a8b4cc',
+      fontFamily: 'sans-serif',
+    });
+
+    const emblem = this.add.text(320, 36, '👑', {
+      fontSize: '32px',
+      color: '#ffd27c',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5, 0.5);
+
+    container.add([bg, title, nameText, infoText, emblem]);
+    return container;
   }
 }

@@ -17,12 +17,15 @@ interface TerritoryVisual {
   banner: Phaser.GameObjects.Rectangle;
 }
 
+type NavigationDirection = 'up' | 'down' | 'left' | 'right';
+
 export class MapScene extends Phaser.Scene {
   private gameState: GameState | null = null;
   private territorySprites: Map<string, TerritoryVisual> = new Map();
   private connectionLines: Phaser.GameObjects.Line[] = [];
   private infoText!: Phaser.GameObjects.Text;
   private selectedFactionId: string = SCENARIO_CIVILIZATIONS.factions[0].id;
+  private selectedTerritoryId: string | null = null;
   private shownQuizIds: Set<string> = new Set();
 
   constructor() {
@@ -78,6 +81,7 @@ export class MapScene extends Phaser.Scene {
     this.updateTurnInfo();
     this.scene.stop('UIScene');
     this.scene.launch('UIScene', { gameState: this.gameState, mapScene: this });
+    this.setupKeyboardControls();
   }
 
   private drawBackdrop() {
@@ -208,10 +212,14 @@ export class MapScene extends Phaser.Scene {
 
       container.on('pointerout', () => {
         this.tweens.killTweensOf(glow);
-        glow.setVisible(false);
-        glow.setScale(1.3);
-        glow.setAlpha(0.18);
-        glow.setStrokeStyle(3, 0xf7e2a0, 0);
+        if (this.selectedTerritoryId === territory.id) {
+          this.applySelectedVisual(territory.id);
+        } else {
+          glow.setVisible(false);
+          glow.setScale(1.3);
+          glow.setAlpha(0.18);
+          glow.setStrokeStyle(3, 0xf7e2a0, 0);
+        }
         base.setScale(1);
         banner.setScale(1);
         this.infoText.setText('');
@@ -231,7 +239,156 @@ export class MapScene extends Phaser.Scene {
   }
 
   private onTerritoryClick(territory: Territory) {
+    this.selectTerritory(territory);
     this.events.emit('territory-selected', territory);
+  }
+
+  private setupKeyboardControls() {
+    this.input.keyboard?.on('keydown', this.handleKeyboardInput, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardInput, this);
+    });
+  }
+
+  private handleKeyboardInput(event: KeyboardEvent) {
+    const directionByCode: Partial<Record<string, NavigationDirection>> = {
+      ArrowUp: 'up',
+      ArrowDown: 'down',
+      ArrowLeft: 'left',
+      ArrowRight: 'right',
+    };
+    const direction = directionByCode[event.code];
+    if (direction) {
+      this.moveSelection(direction);
+      return;
+    }
+
+    const digit = this.getMenuDigitFromKeyEvent(event);
+    if (digit !== null) {
+      const uiScene = this.scene.get('UIScene');
+      uiScene.events.emit('menu-command', digit);
+    }
+  }
+
+  private getMenuDigitFromKeyEvent(event: KeyboardEvent): number | null {
+    if (/^Digit[0-9]$/.test(event.code) || /^Numpad[0-9]$/.test(event.code)) {
+      return Number(event.code.slice(-1));
+    }
+
+    if (/^[0-9]$/.test(event.key)) {
+      return Number(event.key);
+    }
+
+    return null;
+  }
+
+  private moveSelection(direction: NavigationDirection) {
+    if (!this.gameState || !this.selectedTerritoryId) return;
+
+    const current = this.gameState.territories.find((territory) => territory.id === this.selectedTerritoryId);
+    if (!current) return;
+
+    const nextTerritory = this.findAdjacentTerritoryByDirection(current, direction);
+    if (!nextTerritory) return;
+
+    this.selectTerritory(nextTerritory);
+    this.events.emit('territory-selected', nextTerritory);
+  }
+
+  private findAdjacentTerritoryByDirection(
+    current: Territory,
+    direction: NavigationDirection
+  ): Territory | null {
+    if (!this.gameState) return null;
+
+    const adjacentTerritories = current.adjacentTo
+      .map((adjacentId) => this.gameState!.territories.find((territory) => territory.id === adjacentId))
+      .filter((territory): territory is Territory => territory !== undefined);
+
+    if (adjacentTerritories.length === 0) return null;
+
+    const directionalCandidates = adjacentTerritories
+      .map((territory) => {
+        const dx = territory.x - current.x;
+        const dy = territory.y - current.y;
+        const axisDistance = direction === 'left' || direction === 'right' ? Math.abs(dx) : Math.abs(dy);
+        const crossDistance = direction === 'left' || direction === 'right' ? Math.abs(dy) : Math.abs(dx);
+
+        return {
+          territory,
+          dx,
+          dy,
+          axisDistance,
+          crossDistance,
+        };
+      })
+      .filter(({ dx, dy }) => {
+        if (direction === 'up') return dy < 0;
+        if (direction === 'down') return dy > 0;
+        if (direction === 'left') return dx < 0;
+        return dx > 0;
+      })
+      .sort((a, b) => {
+        if (a.crossDistance !== b.crossDistance) {
+          return a.crossDistance - b.crossDistance;
+        }
+        return a.axisDistance - b.axisDistance;
+      });
+
+    return directionalCandidates[0]?.territory ?? null;
+  }
+
+  private selectTerritory(territory: Territory) {
+    if (this.selectedTerritoryId === territory.id) {
+      this.applySelectedVisual(territory.id);
+      return;
+    }
+
+    const previousId = this.selectedTerritoryId;
+    this.selectedTerritoryId = territory.id;
+
+    if (previousId) {
+      this.clearSelectedVisual(previousId);
+    }
+
+    this.applySelectedVisual(territory.id);
+  }
+
+  private applySelectedVisual(territoryId: string) {
+    const visual = this.territorySprites.get(territoryId);
+    if (!visual) return;
+
+    this.tweens.killTweensOf(visual.glow);
+    visual.glow.setVisible(true);
+    visual.glow.setScale(1.38);
+    visual.glow.setAlpha(0.4);
+    visual.glow.setStrokeStyle(4, 0xfff2b3, 0.95);
+
+    // 현재 선택된 도시는 hover와 구분되도록 지속적으로 빛나게 한다.
+    this.tweens.add({
+      targets: visual.glow,
+      scale: 1.52,
+      alpha: 0.65,
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.InOut',
+    });
+  }
+
+  private clearSelectedVisual(territoryId: string) {
+    const visual = this.territorySprites.get(territoryId);
+    if (!visual) return;
+
+    this.tweens.killTweensOf(visual.glow);
+    visual.glow.setVisible(false);
+    visual.glow.setScale(1.3);
+    visual.glow.setAlpha(0.18);
+    visual.glow.setStrokeStyle(3, 0xf7e2a0, 0);
+  }
+
+  private calculateYear(turn: number) {
+    return SCENARIO_CIVILIZATIONS.startYear + Math.floor(turn / 12);
   }
 
   private updateTurnInfo() {
@@ -255,13 +412,13 @@ export class MapScene extends Phaser.Scene {
   }
 
   public nextTurn() {
-    const scenario = SCENARIO_CIVILIZATIONS;
     const factionIdx = this.gameState.factions.findIndex((f) => f.id === this.gameState.currentFaction);
     const nextIdx = (factionIdx + 1) % this.gameState.factions.length;
 
     if (nextIdx === 0) {
       this.gameState.turn++;
-      this.gameState.year += scenario.turnYears;
+      const previousYear = this.gameState.year;
+      this.gameState.year = this.calculateYear(this.gameState.turn);
 
       for (const faction of this.gameState.factions) {
         const ownedTerritories = this.gameState.territories.filter((t) => t.owner === faction.id);
@@ -276,7 +433,9 @@ export class MapScene extends Phaser.Scene {
       // 라운드 종료 시 외교 관계 자연 감소
       decayAllRelations();
 
-      this.addLog(`턴 ${this.gameState.turn}: 새로운 세기가 시작되었습니다.`);
+      if (this.gameState.year !== previousYear) {
+        this.addLog(`턴 ${this.gameState.turn}: 새로운 해가 시작되었습니다.`);
+      }
       this.checkEvents();
 
       if (this.gameState.turn % 3 === 0) {
