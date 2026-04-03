@@ -53,6 +53,21 @@ var ICON_IDS = [
 	"icon-commerce",
 	"icon-population"
 ];
+/** 문명 ID → 아이콘 텍스처 키 매핑 */
+var FACTION_ICON_MAP = {
+	mesopotamia: "icon-mesopotamia",
+	egypt: "icon-egypt",
+	indus: "icon-indus",
+	yellow_river: "icon-china"
+};
+/** 자원 이름 → 아이콘 텍스처 키 매핑 */
+var RESOURCE_ICON_MAP = {
+	food: "icon-food",
+	gold: "icon-gold",
+	culture: "icon-culture",
+	military: "icon-military",
+	technology: "icon-technology"
+};
 /**
 * icons.svg를 fetch하고 각 symbol을 64×64 Canvas에 렌더링 후
 * Phaser 텍스처 매니저에 등록한다.
@@ -976,6 +991,9 @@ var TitleScene = class extends import_phaser.default.Scene {
 		const bg = this.add.rectangle(0, 0, 210, 250, 1056826, .95).setStrokeStyle(2, 3690606, 1).setInteractive({ useHandCursor: true });
 		const banner = this.add.rectangle(0, -92, 182, 42, accent, .92).setStrokeStyle(1, 16244401, .45);
 		const emblem = this.add.circle(0, -28, 26, accent, .22).setStrokeStyle(2, accent, .95);
+		const iconKey = FACTION_ICON_MAP[faction.id];
+		let civIcon = null;
+		if (iconKey && this.textures.exists(iconKey)) civIcon = this.add.image(0, -28, iconKey).setDisplaySize(40, 40);
 		const name = this.add.text(0, -93, faction.name, {
 			fontSize: "20px",
 			color: "#08111d",
@@ -1022,16 +1040,14 @@ var TitleScene = class extends import_phaser.default.Scene {
 			this.selectedFactionId = faction.id;
 			this.refreshFactionCards();
 		});
-		card.add([
+		const elements = [
 			bg,
 			banner,
-			emblem,
-			name,
-			subtitle,
-			leader,
-			trait,
-			resources
-		]);
+			emblem
+		];
+		if (civIcon) elements.push(civIcon);
+		elements.push(name, subtitle, leader, trait, resources);
+		card.add(elements);
 		return card;
 	}
 	refreshFactionCards() {
@@ -1768,86 +1784,7 @@ var MapScene = class extends import_phaser.default.Scene {
 			graphics.strokeEllipse(centerX, centerY, width, height);
 		}
 	}
-	/** 문명별 특색 있는 도시 아이콘을 그린다 */
-	drawCityIcon(graphics, x, y, factionId) {
-		if (factionId === "mesopotamia") {
-			graphics.fillStyle(12883306, 1);
-			graphics.fillRect(x - 20, y + 2, 40, 12);
-			graphics.fillStyle(10384712, 1);
-			graphics.fillRect(x - 14, y - 6, 28, 10);
-			graphics.fillStyle(15777856, 1);
-			graphics.fillRect(x - 8, y - 14, 16, 8);
-			graphics.lineStyle(2, 15777856, .9);
-			graphics.beginPath();
-			graphics.moveTo(x, y - 14);
-			graphics.lineTo(x, y - 24);
-			graphics.strokePath();
-			graphics.fillStyle(15777856, 1);
-			graphics.fillTriangle(x, y - 24, x + 8, y - 20, x, y - 16);
-		} else if (factionId === "egypt") {
-			graphics.fillStyle(13935988, 1);
-			graphics.fillTriangle(x - 20, y + 10, x, y - 18, x + 20, y + 10);
-			graphics.fillStyle(12632256, 1);
-			graphics.fillRect(x + 22, y - 10, 4, 20);
-			graphics.fillTriangle(x + 22, y - 10, x + 24, y - 16, x + 26, y - 10);
-			graphics.lineStyle(2, 4491468, .6);
-			graphics.beginPath();
-			graphics.moveTo(x - 24, y + 12);
-			graphics.lineTo(x + 28, y + 12);
-			graphics.strokePath();
-		} else if (factionId === "indus") {
-			graphics.fillStyle(12868669, 1);
-			graphics.fillRect(x - 18, y - 14, 36, 28);
-			graphics.fillStyle(13924954, 1);
-			graphics.fillRect(x - 14, y - 10, 10, 8);
-			graphics.fillRect(x + 4, y - 10, 10, 8);
-			graphics.fillRect(x - 6, y + 2, 12, 8);
-			graphics.fillStyle(4491468, 1);
-			graphics.fillRect(x + 6, y + 4, 8, 6);
-		} else if (factionId === "yellow_river") {
-			graphics.fillStyle(14692400, 1);
-			graphics.fillTriangle(x - 22, y - 2, x, y - 16, x + 22, y - 2);
-			graphics.lineStyle(3, 14692400, 1);
-			graphics.beginPath();
-			graphics.moveTo(x - 22, y - 2);
-			graphics.lineTo(x - 26, y - 6);
-			graphics.strokePath();
-			graphics.beginPath();
-			graphics.moveTo(x + 22, y - 2);
-			graphics.lineTo(x + 26, y - 6);
-			graphics.strokePath();
-			graphics.fillStyle(11542560, 1);
-			graphics.fillRect(x - 15, y - 2, 30, 15);
-			graphics.fillStyle(15777856, .8);
-			graphics.fillRect(x - 10, y - 2, 3, 15);
-			graphics.fillRect(x + 7, y - 2, 3, 15);
-		} else {
-			graphics.fillStyle(8029588, .8);
-			const pts = [
-				-20,
-				-5,
-				-12,
-				-16,
-				12,
-				-16,
-				20,
-				-5,
-				20,
-				9,
-				0,
-				18,
-				-20,
-				9
-			];
-			graphics.beginPath();
-			graphics.moveTo(x + pts[0], y + pts[1]);
-			for (let i = 2; i < pts.length; i += 2) graphics.lineTo(x + pts[i], y + pts[i + 1]);
-			graphics.closePath();
-			graphics.fillPath();
-		}
-	}
 	drawTerritories() {
-		const cityGraphics = this.add.graphics();
 		for (const territory of this.gameState.territories) {
 			const faction = this.gameState.factions.find((f) => f.id === territory.owner);
 			const color = faction ? import_phaser.default.Display.Color.IntegerToColor(faction.color).brighten(30).color : 8029588;
@@ -1869,9 +1806,21 @@ var MapScene = class extends import_phaser.default.Scene {
 			];
 			const container = this.add.container(territory.x, territory.y);
 			const glow = this.add.polygon(0, 0, points, color, .18).setStrokeStyle(3, 16245408, 0).setScale(1.3).setVisible(false);
-			const base = this.add.polygon(0, 0, points, color, 0).setStrokeStyle(0, 0, 0);
-			const banner = this.add.rectangle(0, 0, 0, 0, 0, 0);
-			this.drawCityIcon(cityGraphics, territory.x, territory.y, territory.owner);
+			const base = this.add.polygon(0, 0, points, color, .9).setStrokeStyle(2, 16051672, .65);
+			const banner = this.add.rectangle(0, -6, 30, 12, 15777856, .95).setStrokeStyle(1, 3418378, .55);
+			const keep = this.add.rectangle(0, 2, 16, 21, 2110024, .92).setStrokeStyle(1, 16777215, .25);
+			const gate = this.add.rectangle(0, 9, 7, 12, 528669, .95);
+			let civIcon = null;
+			if (faction) {
+				const iconKey = FACTION_ICON_MAP[faction.id];
+				if (iconKey && this.textures.exists(iconKey)) {
+					base.setAlpha(.3);
+					banner.setAlpha(.3);
+					keep.setAlpha(.3);
+					gate.setAlpha(.3);
+					civIcon = this.add.image(0, 0, iconKey).setDisplaySize(48, 48);
+				}
+			}
 			const nameText = this.add.text(0, -50, territory.name, {
 				fontSize: "13px",
 				color: "#f7f3e7",
@@ -1879,20 +1828,23 @@ var MapScene = class extends import_phaser.default.Scene {
 				stroke: "#08111d",
 				strokeThickness: 3
 			}).setOrigin(.5);
-			const garrisonText = this.add.text(0, 45, `⚔️ ${(territory.garrison / 1e3).toFixed(1)}k`, {
+			const garrisonText = this.add.text(0, 34, `⚔️ ${(territory.garrison / 1e3).toFixed(1)}k`, {
 				fontSize: "11px",
 				color: "#ffccaf",
 				fontFamily: "monospace",
 				stroke: "#08111d",
 				strokeThickness: 2
 			}).setOrigin(.5);
-			container.add([
+			const children = [
 				glow,
 				base,
 				banner,
-				nameText,
-				garrisonText
-			]);
+				keep,
+				gate
+			];
+			if (civIcon) children.push(civIcon);
+			children.push(nameText, garrisonText);
+			container.add(children);
 			container.setSize(84, 84);
 			container.setInteractive(new import_phaser.default.Geom.Circle(0, 0, 40), import_phaser.default.Geom.Circle.Contains);
 			container.on("pointerdown", () => {
@@ -2315,31 +2267,36 @@ var UIScene = class extends import_phaser.default.Scene {
 		container.add(nameText);
 		const resources = [
 			{
-				icon: "🌾",
+				key: "food",
+				fallback: "🌾",
 				val: r.food,
 				max: 200,
 				color: 5025616
 			},
 			{
-				icon: "💰",
+				key: "gold",
+				fallback: "💰",
 				val: r.gold,
 				max: 200,
 				color: 16761095
 			},
 			{
-				icon: "🎭",
+				key: "culture",
+				fallback: "🎭",
 				val: r.culture,
 				max: 200,
 				color: 10233776
 			},
 			{
-				icon: "⚔️",
+				key: "military",
+				fallback: "⚔️",
 				val: r.military,
 				max: 200,
 				color: 16007990
 			},
 			{
-				icon: "🔬",
+				key: "technology",
+				fallback: "🔬",
 				val: r.technology,
 				max: 200,
 				color: 2201331
@@ -2348,12 +2305,24 @@ var UIScene = class extends import_phaser.default.Scene {
 		const barMaxW = 40;
 		resources.forEach((res, i) => {
 			const x = 10 + i * 56;
-			const text = this.add.text(x, 26, `${res.icon}${res.val}`, {
-				fontSize: "12px",
-				color: "#f4edd8",
-				fontFamily: "monospace"
-			});
-			container.add(text);
+			const iconKey = RESOURCE_ICON_MAP[res.key];
+			if (iconKey && this.textures.exists(iconKey)) {
+				const icon = this.add.image(x + 10, 30, iconKey).setDisplaySize(20, 20).setOrigin(.5);
+				container.add(icon);
+				const text = this.add.text(x + 22, 24, `${res.val}`, {
+					fontSize: "12px",
+					color: "#f4edd8",
+					fontFamily: "monospace"
+				});
+				container.add(text);
+			} else {
+				const text = this.add.text(x, 26, `${res.fallback}${res.val}`, {
+					fontSize: "12px",
+					color: "#f4edd8",
+					fontFamily: "monospace"
+				});
+				container.add(text);
+			}
 			const barW = barMaxW * Math.min(res.val / res.max, 1);
 			const barBg = this.add.rectangle(x, 46, barMaxW, 4, COLORS.barBg, .8).setOrigin(0);
 			const barFill = this.add.rectangle(x, 46, Math.max(barW, 1), 4, res.color, .9).setOrigin(0);
