@@ -320,22 +320,29 @@ export class UIScene extends Phaser.Scene {
     const existing = this.children.getByName('leaderContainer');
     if (existing) existing.destroy();
 
-    const container = this.add.container(620, 596).setName('leaderContainer');
+    const container = this.add.container(860, 596).setName('leaderContainer');
     const playerFaction = this.gameState.factions.find(f => f.isPlayer);
     if (!playerFaction) return container;
 
     // 세력 색상 그라데이션 배경
-    const bg = this.add.rectangle(0, 0, 240, 104, COLORS.darkest, 0.92)
+    const bg = this.add.rectangle(0, 0, 200, 104, COLORS.darkest, 0.92)
       .setStrokeStyle(1, 0x446688, 0.6)
       .setOrigin(0);
     container.add(bg);
 
     // 은은한 세력 색상 오버레이
-    const overlay = this.add.rectangle(0, 0, 240, 104, playerFaction.color, 0.08)
+    const overlay = this.add.rectangle(0, 0, 200, 104, playerFaction.color, 0.08)
       .setOrigin(0);
     container.add(overlay);
 
-    const icon = this.add.text(16, 12, '👑', {
+    // 문명별 대표 이모지
+    const factionEmoji: Record<string, string> = {
+      mesopotamia: '🏛️',
+      egypt: '🔺',
+      indus: '🏗️',
+      yellow_river: '🏯',
+    };
+    const icon = this.add.text(16, 12, factionEmoji[playerFaction.id] ?? '👑', {
       fontSize: '32px',
     });
     container.add(icon);

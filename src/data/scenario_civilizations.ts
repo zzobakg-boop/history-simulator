@@ -81,46 +81,46 @@ export const SCENARIO_CIVILIZATIONS: Scenario = {
   ],
 
   territories: [
-    // 메소포타미아
-    { id: 'ur', name: '우르', x: 580, y: 340, owner: 'mesopotamia', population: 30000,
+    // 메소포타미아 (중앙 좌측, x: 380~520)
+    { id: 'ur', name: '우르', x: 440, y: 400, owner: 'mesopotamia', population: 30000,
       development: { agriculture: 70, commerce: 50, defense: 40 }, garrison: 2000,
       adjacentTo: ['babylon', 'memphis'] },
-    { id: 'babylon', name: '바빌론', x: 560, y: 300, owner: 'mesopotamia', population: 40000,
+    { id: 'babylon', name: '바빌론', x: 410, y: 280, owner: 'mesopotamia', population: 40000,
       development: { agriculture: 80, commerce: 60, defense: 50 }, garrison: 3000,
       adjacentTo: ['ur', 'nineveh'] },
-    { id: 'nineveh', name: '니네베', x: 550, y: 260, owner: 'mesopotamia', population: 25000,
+    { id: 'nineveh', name: '니네베', x: 480, y: 170, owner: 'mesopotamia', population: 25000,
       development: { agriculture: 60, commerce: 40, defense: 60 }, garrison: 2500,
-      adjacentTo: ['babylon'] },
+      adjacentTo: ['babylon', 'harappa'] },
 
-    // 이집트
-    { id: 'memphis', name: '멤피스', x: 440, y: 340, owner: 'egypt', population: 35000,
+    // 이집트 (좌측, x: 100~280)
+    { id: 'memphis', name: '멤피스', x: 180, y: 250, owner: 'egypt', population: 35000,
       development: { agriculture: 85, commerce: 45, defense: 35 }, garrison: 2000,
-      adjacentTo: ['thebes', 'ur'] },
-    { id: 'thebes', name: '테베', x: 450, y: 400, owner: 'egypt', population: 30000,
+      adjacentTo: ['thebes', 'alexandria', 'ur'] },
+    { id: 'thebes', name: '테베', x: 150, y: 380, owner: 'egypt', population: 30000,
       development: { agriculture: 75, commerce: 55, defense: 30 }, garrison: 1500,
       adjacentTo: ['memphis', 'alexandria'] },
-    { id: 'alexandria', name: '알렉산드리아', x: 420, y: 310, owner: 'egypt', population: 20000,
+    { id: 'alexandria', name: '알렉산드리아', x: 240, y: 160, owner: 'egypt', population: 20000,
       development: { agriculture: 50, commerce: 70, defense: 40 }, garrison: 1000,
-      adjacentTo: ['thebes', 'memphis'] },
+      adjacentTo: ['memphis', 'thebes'] },
 
-    // 인더스
-    { id: 'harappa', name: '하라파', x: 720, y: 300, owner: 'indus', population: 25000,
+    // 인더스 (중앙 우측, x: 620~760)
+    { id: 'harappa', name: '하라파', x: 670, y: 220, owner: 'indus', population: 25000,
       development: { agriculture: 65, commerce: 60, defense: 25 }, garrison: 1000,
-      adjacentTo: ['mohenjo-daro'] },
-    { id: 'mohenjo-daro', name: '모헨조다로', x: 710, y: 360, owner: 'indus', population: 30000,
+      adjacentTo: ['mohenjo-daro', 'nineveh'] },
+    { id: 'mohenjo-daro', name: '모헨조다로', x: 700, y: 380, owner: 'indus', population: 30000,
       development: { agriculture: 70, commerce: 65, defense: 30 }, garrison: 1200,
-      adjacentTo: ['harappa'] },
+      adjacentTo: ['harappa', 'xian'] },
 
-    // 황허
-    { id: 'anyang', name: '안양(殷墟)', x: 920, y: 280, owner: 'yellow_river', population: 28000,
+    // 황허 (우측, x: 840~1000)
+    { id: 'anyang', name: '안양(殷墟)', x: 890, y: 180, owner: 'yellow_river', population: 28000,
       development: { agriculture: 60, commerce: 35, defense: 50 }, garrison: 2500,
       adjacentTo: ['luoyang', 'xian'] },
-    { id: 'luoyang', name: '뤄양', x: 900, y: 310, owner: 'yellow_river', population: 32000,
+    { id: 'luoyang', name: '뤄양', x: 920, y: 320, owner: 'yellow_river', population: 32000,
       development: { agriculture: 70, commerce: 40, defense: 45 }, garrison: 2000,
       adjacentTo: ['anyang', 'xian'] },
-    { id: 'xian', name: '시안(호경)', x: 870, y: 300, owner: 'yellow_river', population: 22000,
+    { id: 'xian', name: '시안(호경)', x: 850, y: 440, owner: 'yellow_river', population: 22000,
       development: { agriculture: 55, commerce: 30, defense: 55 }, garrison: 1800,
-      adjacentTo: ['anyang', 'luoyang'] },
+      adjacentTo: ['anyang', 'luoyang', 'mohenjo-daro'] },
   ],
 
   events: [

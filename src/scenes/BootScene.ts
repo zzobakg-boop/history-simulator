@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { loadSvgIcons } from '../utils/svgIconLoader';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -32,6 +33,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.start('TitleScene');
+    // SVG 아이콘을 Canvas API로 렌더링하여 Phaser 텍스처에 등록
+    const basePath = import.meta.env.BASE_URL ?? '/';
+    loadSvgIcons(this.textures, basePath).then(() => {
+      this.scene.start('TitleScene');
+    });
   }
 }
