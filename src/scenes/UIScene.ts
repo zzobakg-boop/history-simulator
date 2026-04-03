@@ -1,13 +1,20 @@
 import Phaser from 'phaser';
-import type { Territory, GameState, GameEvent } from '../game/types';
+import type { Quiz } from '../data/quizzes';
+import type { Territory, GameState, GameEvent, Faction, BattleResult } from '../game/types';
+import { getAttackableTargets, calculateBattle } from '../game/combat';
+import { getRelation, proposeTrade, proposeAlliance } from '../game/diplomacy';
 
 export class UIScene extends Phaser.Scene {
   private gameState!: GameState;
   private mapScene!: Phaser.Scene;
   private panel!: Phaser.GameObjects.Container;
   private eventPanel!: Phaser.GameObjects.Container;
+  private quizPanel!: Phaser.GameObjects.Container;
+  private battleModal!: Phaser.GameObjects.Container;
+  private diplomacyPanel!: Phaser.GameObjects.Container;
   private logPanel!: Phaser.GameObjects.Container;
   private logTexts: Phaser.GameObjects.Text[] = [];
+  private quizCloseTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super({ key: 'UIScene' });
@@ -31,6 +38,18 @@ export class UIScene extends Phaser.Scene {
     this.eventPanel = this.add.container(640, 360);
     this.eventPanel.setVisible(false);
 
+    // 퀴즈 모달
+    this.quizPanel = this.add.container(640, 360);
+    this.quizPanel.setVisible(false);
+
+    // 전투 결과 모달
+    this.battleModal = this.add.container(640, 360);
+    this.battleModal.setVisible(false);
+
+    // 외교 패널 (중앙 모달)
+    this.diplomacyPanel = this.add.container(640, 360);
+    this.diplomacyPanel.setVisible(false);
+
     // 하단 로그 패널
     this.createLogPanel();
 
@@ -38,6 +57,11 @@ export class UIScene extends Phaser.Scene {
     this.createButton(1180, 690, '⏭️ 턴 종료', () => {
       (this.mapScene as any).nextTurn();
       this.updateResourcePanel();
+    });
+
+    // "외교" 버튼
+    this.createButton(1030, 690, '🤝 외교', () => {
+      this.showDiplomacyPanel();
     });
 
     // 자원 패널 (상단 좌측)
@@ -51,6 +75,10 @@ export class UIScene extends Phaser.Scene {
 
     mapScene.events.on('game-event', (event: GameEvent) => {
       this.showEventModal(event);
+    });
+
+    mapScene.events.on('quiz-trigger', (quiz: Quiz) => {
+      this.showQuizModal(quiz);
     });
 
     mapScene.events.on('log-updated', () => {
@@ -232,6 +260,31 @@ export class UIScene extends Phaser.Scene {
           this.updateResourcePanel();
         }
       });
+      y += 42;
+
+      // 공격 가능한 인접 적 영토 표시
+      const targets = getAttackableTargets(faction!, this.gameState);
+      // 현재 영토에서 인접한 적 영토만 필터
+      const localTargets = targets.filter(t => territory.adjacentTo.includes(t.id));
+
+      if (localTargets.length > 0) {
+        addText(`──────────────`, '#334466');
+        addText(`⚔️ 공격 가능`, '#ff6b6b', '14px');
+        y += 2;
+
+        for (const target of localTargets) {
+          const defFaction = this.gameState.factions.find(f => f.id === target.owner);
+          this.createPanelButton(15, y, `⚔️ ${target.name} (${defFaction?.name})`, () => {
+            if (!faction || !defFaction) return;
+            const result = calculateBattle(faction, defFaction, target, this.gameState);
+            (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${result.log}`);
+            (this.mapScene as any).refreshTerritoryVisuals?.();
+            this.showBattleResultModal(result, faction, defFaction, target);
+            this.updateResourcePanel();
+          });
+          y += 36;
+        }
+      }
     }
   }
 
@@ -250,6 +303,225 @@ export class UIScene extends Phaser.Scene {
     bg.on('pointerdown', callback);
 
     this.panel.add([bg, label]);
+  }
+
+  /** 전투 결과 모달 */
+  private showBattleResultModal(
+    result: BattleResult,
+    attacker: Faction,
+    defender: Faction,
+    territory: Territory,
+  ) {
+    this.battleModal.removeAll(true);
+    this.battleModal.setVisible(true);
+
+    const overlay = this.add.rectangle(0, 0, 1280, 720, 0x000000, 0.6)
+      .setInteractive();
+    this.battleModal.add(overlay);
+
+    const modal = this.add.rectangle(0, 0, 460, 340, 0x16213e, 0.95)
+      .setStrokeStyle(2, 0xf0c040);
+    this.battleModal.add(modal);
+
+    const title = this.add.text(0, -140, '⚔️ 전투 결과', {
+      fontSize: '22px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.battleModal.add(title);
+
+    const resultColor = result.victor === 'attacker' ? '#66ff66' : '#ff6666';
+    const resultText = result.victor === 'attacker' ? '🏆 승리 — 영토 점령!' : '💀 패배 — 공격 실패';
+
+    const lines = [
+      `${attacker.name} → ${territory.name} (${defender.name})`,
+      ``,
+      `공격측 손실: ${result.attackerLosses.toLocaleString()}명`,
+      `방어측 손실: ${result.defenderLosses.toLocaleString()}명`,
+      ``,
+      result.territoryConquered
+        ? `${territory.name}이(가) ${attacker.name}에 점령되었습니다.`
+        : `${defender.name}이(가) ${territory.name}을(를) 사수했습니다.`,
+    ];
+
+    const desc = this.add.text(0, -60, lines.join('\n'), {
+      fontSize: '14px',
+      color: '#dddddd',
+      fontFamily: 'sans-serif',
+      lineSpacing: 5,
+      align: 'center',
+    }).setOrigin(0.5, 0);
+    this.battleModal.add(desc);
+
+    const verdict = this.add.text(0, 80, resultText, {
+      fontSize: '18px',
+      color: resultColor,
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.battleModal.add(verdict);
+
+    // 확인 버튼
+    const btnBg = this.add.rectangle(0, 130, 140, 38, 0x2a4a7f, 0.9)
+      .setStrokeStyle(1, 0x5588bb)
+      .setInteractive({ useHandCursor: true });
+    const btnLabel = this.add.text(0, 130, '확인', {
+      fontSize: '15px',
+      color: '#ffffff',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+
+    btnBg.on('pointerover', () => btnBg.setFillStyle(0x3a6abf));
+    btnBg.on('pointerout', () => btnBg.setFillStyle(0x2a4a7f));
+    btnBg.on('pointerdown', () => {
+      this.battleModal.setVisible(false);
+      // 패널 갱신
+      const selectedTerritory = this.gameState.territories.find(t => t.id === territory.id);
+      if (selectedTerritory) this.showTerritoryPanel(selectedTerritory);
+    });
+
+    this.battleModal.add([btnBg, btnLabel]);
+  }
+
+  /** 관계 수치 → 상태 텍스트 */
+  private getRelationLabel(value: number): { text: string; color: string } {
+    if (value >= 60) return { text: '동맹', color: '#66ff66' };
+    if (value >= 30) return { text: '우호', color: '#88ddff' };
+    if (value >= -10) return { text: '중립', color: '#cccccc' };
+    if (value >= -40) return { text: '경계', color: '#ffaa44' };
+    return { text: '적대', color: '#ff4444' };
+  }
+
+  /** 외교 패널 */
+  private showDiplomacyPanel() {
+    this.diplomacyPanel.removeAll(true);
+    this.diplomacyPanel.setVisible(true);
+
+    const overlay = this.add.rectangle(0, 0, 1280, 720, 0x000000, 0.6)
+      .setInteractive();
+    this.diplomacyPanel.add(overlay);
+
+    const player = this.gameState.factions.find(f => f.isPlayer);
+    if (!player) return;
+
+    const otherFactions = this.gameState.factions.filter(f => !f.isPlayer);
+    const modalHeight = 120 + otherFactions.length * 100;
+    const modal = this.add.rectangle(0, 0, 520, modalHeight, 0x16213e, 0.95)
+      .setStrokeStyle(2, 0xf0c040);
+    this.diplomacyPanel.add(modal);
+
+    const title = this.add.text(0, -modalHeight / 2 + 25, '🤝 외교', {
+      fontSize: '22px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.diplomacyPanel.add(title);
+
+    let y = -modalHeight / 2 + 60;
+
+    for (const faction of otherFactions) {
+      const relation = getRelation(player.id, faction.id);
+      const label = this.getRelationLabel(relation);
+
+      // 세력 이름 + 관계
+      const nameText = this.add.text(-230, y, `${faction.name}`, {
+        fontSize: '15px',
+        color: '#ffffff',
+        fontFamily: 'sans-serif',
+      });
+      this.diplomacyPanel.add(nameText);
+
+      const relText = this.add.text(-230, y + 22, `관계: ${relation} (${label.text})`, {
+        fontSize: '12px',
+        color: label.color,
+        fontFamily: 'sans-serif',
+      });
+      this.diplomacyPanel.add(relText);
+
+      // 교역 제안 버튼
+      const tradeBg = this.add.rectangle(80, y + 14, 130, 32, 0x2a4a7f, 0.9)
+        .setStrokeStyle(1, 0x4477aa)
+        .setInteractive({ useHandCursor: true });
+      const tradeLabel = this.add.text(80, y + 14, '💰 교역 제안', {
+        fontSize: '12px',
+        color: '#ffffff',
+        fontFamily: 'sans-serif',
+      }).setOrigin(0.5);
+
+      tradeBg.on('pointerover', () => tradeBg.setFillStyle(0x3a6abf));
+      tradeBg.on('pointerout', () => tradeBg.setFillStyle(0x2a4a7f));
+      tradeBg.on('pointerdown', () => {
+        const result = proposeTrade({
+          from: player.id,
+          to: faction.id,
+          offer: { food: 20 },
+          demand: { gold: 20 },
+        }, this.gameState.factions);
+        (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${faction.name}에 교역 제안 → ${result.reason}`);
+        this.updateResourcePanel();
+        this.showDiplomacyPanel(); // 갱신
+      });
+
+      this.diplomacyPanel.add([tradeBg, tradeLabel]);
+
+      // 동맹 제안 버튼 (관계 30 이상)
+      const canAlly = relation >= 30;
+      const allyColor = canAlly ? 0x2a4a7f : 0x1a2a3f;
+      const allyBg = this.add.rectangle(210, y + 14, 130, 32, allyColor, 0.9)
+        .setStrokeStyle(1, canAlly ? 0x4477aa : 0x333333);
+      if (canAlly) allyBg.setInteractive({ useHandCursor: true });
+
+      const allyLabel = this.add.text(210, y + 14, '🤝 동맹 제안', {
+        fontSize: '12px',
+        color: canAlly ? '#ffffff' : '#666666',
+        fontFamily: 'sans-serif',
+      }).setOrigin(0.5);
+
+      if (canAlly) {
+        allyBg.on('pointerover', () => allyBg.setFillStyle(0x3a6abf));
+        allyBg.on('pointerout', () => allyBg.setFillStyle(0x2a4a7f));
+        allyBg.on('pointerdown', () => {
+          const result = proposeAlliance(player, faction);
+          (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: ${faction.name}에 동맹 제안 → ${result.reason}`);
+          this.showDiplomacyPanel(); // 갱신
+        });
+      }
+
+      this.diplomacyPanel.add([allyBg, allyLabel]);
+
+      // 영토 수 표시
+      const terrCount = this.gameState.territories.filter(t => t.owner === faction.id).length;
+      const infoText = this.add.text(-230, y + 42, `영토 ${terrCount}개 | 병력 ${faction.territories.length > 0
+        ? this.gameState.territories
+            .filter(t => t.owner === faction.id)
+            .reduce((s, t) => s + t.garrison, 0)
+            .toLocaleString()
+        : '0'}명`, {
+        fontSize: '11px',
+        color: '#888888',
+        fontFamily: 'sans-serif',
+      });
+      this.diplomacyPanel.add(infoText);
+
+      y += 90;
+    }
+
+    // 닫기 버튼
+    const closeBg = this.add.rectangle(0, modalHeight / 2 - 35, 120, 34, 0x2a4a7f, 0.9)
+      .setStrokeStyle(1, 0x5588bb)
+      .setInteractive({ useHandCursor: true });
+    const closeLabel = this.add.text(0, modalHeight / 2 - 35, '닫기', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+
+    closeBg.on('pointerover', () => closeBg.setFillStyle(0x3a6abf));
+    closeBg.on('pointerout', () => closeBg.setFillStyle(0x2a4a7f));
+    closeBg.on('pointerdown', () => {
+      this.diplomacyPanel.setVisible(false);
+    });
+
+    this.diplomacyPanel.add([closeBg, closeLabel]);
   }
 
   /** 교과서 이벤트 모달 */
@@ -324,5 +596,176 @@ export class UIScene extends Phaser.Scene {
         this.eventPanel.add([btnBg, btnText]);
       });
     }
+  }
+
+  /** 교과서 퀴즈 모달 */
+  private showQuizModal(quiz: Quiz) {
+    this.quizCloseTimer?.remove(false);
+    this.quizPanel.removeAll(true);
+    this.quizPanel.setVisible(true);
+
+    let answered = false;
+
+    // 배경 오버레이
+    const overlay = this.add.rectangle(0, 0, 1280, 720, 0x000000, 0.6)
+      .setInteractive();
+    this.quizPanel.add(overlay);
+
+    // 모달 박스
+    const modal = this.add.rectangle(0, 0, 520, 420, 0x16213e, 0.95)
+      .setStrokeStyle(2, 0xf0c040);
+    this.quizPanel.add(modal);
+
+    const title = this.add.text(0, -170, '📝 교과서 퀴즈', {
+      fontSize: '22px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.quizPanel.add(title);
+
+    const question = this.add.text(0, -120, quiz.question, {
+      fontSize: '18px',
+      color: '#f4f0e6',
+      fontFamily: 'sans-serif',
+      wordWrap: { width: 440 },
+      align: 'center',
+      lineSpacing: 6,
+    }).setOrigin(0.5);
+    this.quizPanel.add(question);
+
+    const textbookRef = this.add.text(0, -52, `📖 ${quiz.textbookRef}`, {
+      fontSize: '12px',
+      color: '#88aacc',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.quizPanel.add(textbookRef);
+
+    const resultText = this.add.text(0, 120, '', {
+      fontSize: '18px',
+      color: '#dddddd',
+      fontFamily: 'sans-serif',
+      wordWrap: { width: 430 },
+      align: 'center',
+      lineSpacing: 5,
+    }).setOrigin(0.5);
+    this.quizPanel.add(resultText);
+
+    const answerRefText = this.add.text(0, 165, '', {
+      fontSize: '13px',
+      color: '#88aacc',
+      fontFamily: 'sans-serif',
+      wordWrap: { width: 430 },
+      align: 'center',
+    }).setOrigin(0.5);
+    this.quizPanel.add(answerRefText);
+
+    const answerButtons: Phaser.GameObjects.Rectangle[] = [];
+    const answerLabels: Phaser.GameObjects.Text[] = [];
+    const choiceTexts = quiz.type === 'ox' ? ['O', 'X'] : quiz.options ?? [];
+    const startY = quiz.type === 'ox' ? -10 : -25;
+
+    const lockAnswers = () => {
+      answerButtons.forEach((button) => button.disableInteractive());
+    };
+
+    const showCloseButton = () => {
+      const closeBg = this.add.rectangle(0, 205, 140, 36, 0x2a4a7f, 0.9)
+        .setStrokeStyle(1, 0x5588bb)
+        .setInteractive({ useHandCursor: true });
+      const closeText = this.add.text(0, 205, '확인', {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontFamily: 'sans-serif',
+      }).setOrigin(0.5);
+
+      closeBg.on('pointerover', () => closeBg.setFillStyle(0x3a6abf));
+      closeBg.on('pointerout', () => closeBg.setFillStyle(0x2a4a7f));
+      closeBg.on('pointerdown', () => this.closeQuizModal());
+
+      this.quizPanel.add([closeBg, closeText]);
+    };
+
+    const submitAnswer = (selectedAnswer: string) => {
+      if (answered) return;
+      answered = true;
+      lockAnswers();
+
+      const isCorrect = selectedAnswer === quiz.answer;
+      const playerFaction = this.gameState.factions.find((f) => f.isPlayer);
+
+      if (isCorrect && playerFaction) {
+        for (const [key, value] of Object.entries(quiz.reward)) {
+          playerFaction.resources[key as keyof Faction['resources']] += value ?? 0;
+        }
+        this.updateResourcePanel();
+      }
+
+      const rewardText = this.formatRewardText(quiz.reward);
+
+      if (isCorrect) {
+        resultText.setColor('#7CFFB2');
+        resultText.setText(`✅ 정답! ${rewardText}`);
+        answerRefText.setText('');
+        (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: 퀴즈 정답 - ${rewardText}`);
+      } else {
+        resultText.setColor('#FF8A8A');
+        resultText.setText(`❌ 오답! 정답은 ${quiz.answer}`);
+        answerRefText.setText(`교과서 참조: ${quiz.textbookRef}`);
+        (this.mapScene as any).addLog(`턴 ${this.gameState.turn}: 퀴즈 오답 - 정답 ${quiz.answer}`);
+      }
+
+      showCloseButton();
+      this.quizCloseTimer = this.time.delayedCall(2000, () => {
+        this.closeQuizModal();
+      });
+    };
+
+    choiceTexts.forEach((choice, index) => {
+      const buttonY = startY + index * 52;
+      const buttonBg = this.add.rectangle(0, buttonY, 430, 40, 0x2a4a7f, 0.9)
+        .setStrokeStyle(1, 0x5588bb)
+        .setInteractive({ useHandCursor: true });
+      const buttonText = this.add.text(0, buttonY, choice, {
+        fontSize: '15px',
+        color: '#ffffff',
+        fontFamily: 'sans-serif',
+        wordWrap: { width: 390 },
+        align: 'center',
+      }).setOrigin(0.5);
+
+      buttonBg.on('pointerover', () => {
+        if (!answered) buttonBg.setFillStyle(0x3a6abf);
+      });
+      buttonBg.on('pointerout', () => {
+        if (!answered) buttonBg.setFillStyle(0x2a4a7f);
+      });
+      buttonBg.on('pointerdown', () => submitAnswer(choice));
+
+      answerButtons.push(buttonBg);
+      answerLabels.push(buttonText);
+      this.quizPanel.add([buttonBg, buttonText]);
+    });
+  }
+
+  private closeQuizModal() {
+    this.quizCloseTimer?.remove(false);
+    this.quizCloseTimer = undefined;
+    this.quizPanel.setVisible(false);
+    this.quizPanel.removeAll(true);
+  }
+
+  /** 자원 보상 문구를 사용자 친화적인 형식으로 변환한다. */
+  private formatRewardText(reward: Quiz['reward']) {
+    const rewardLabels: Record<keyof Quiz['reward'], string> = {
+      food: '식량',
+      gold: '재화',
+      culture: '문화',
+      military: '군사',
+      technology: '기술',
+    };
+
+    return Object.entries(reward)
+      .map(([key, value]) => `${rewardLabels[key as keyof Quiz['reward']]} +${value}`)
+      .join(', ');
   }
 }

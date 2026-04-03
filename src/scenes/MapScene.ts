@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
+import { QUIZZES } from '../data/quizzes';
+import type { Quiz } from '../data/quizzes';
 import { SCENARIO_CIVILIZATIONS } from '../data/scenario_civilizations';
 import type { GameState, Territory, Faction } from '../game/types';
+import { executeAITurn } from '../game/ai';
+import { decayAllRelations } from '../game/diplomacy';
 
 interface MapSceneInitData {
   selectedFactionId?: string;
@@ -19,6 +23,7 @@ export class MapScene extends Phaser.Scene {
   private connectionLines: Phaser.GameObjects.Line[] = [];
   private infoText!: Phaser.GameObjects.Text;
   private selectedFactionId: string = SCENARIO_CIVILIZATIONS.factions[0].id;
+  private shownQuizIds: Set<string> = new Set();
 
   constructor() {
     super({ key: 'MapScene' });
@@ -268,8 +273,16 @@ export class MapScene extends Phaser.Scene {
         faction.resources.technology += 1;
       }
 
+      // 라운드 종료 시 외교 관계 자연 감소
+      decayAllRelations();
+
       this.addLog(`턴 ${this.gameState.turn}: 새로운 세기가 시작되었습니다.`);
       this.checkEvents();
+
+      if (this.gameState.turn % 3 === 0) {
+        const quiz = this.getNextQuiz();
+        this.events.emit('quiz-trigger', quiz);
+      }
     }
 
     this.gameState.currentFaction = this.gameState.factions[nextIdx].id;
@@ -285,16 +298,17 @@ export class MapScene extends Phaser.Scene {
   }
 
   private doAITurn(faction: Faction) {
-    const territories = this.gameState.territories.filter((t) => t.owner === faction.id);
-    if (territories.length > 0) {
-      const weakest = territories.reduce((a, b) =>
-        a.development.agriculture < b.development.agriculture ? a : b
-      );
-      weakest.development.agriculture = Math.min(100, weakest.development.agriculture + 5);
-      weakest.garrison += 200;
-      this.addLog(`턴 ${this.gameState.turn}: ${faction.name}가 ${weakest.name}의 농업을 개발했습니다.`);
-    } else {
-      this.addLog(`턴 ${this.gameState.turn}: ${faction.name}가 세력을 재정비했습니다.`);
+    const actions = executeAITurn(faction, this.gameState!);
+    if (actions.length === 0) {
+      this.addLog(`턴 ${this.gameState!.turn}: ${faction.name}이(가) 세력을 재정비했습니다.`);
+      return;
+    }
+    for (const action of actions) {
+      this.addLog(`턴 ${this.gameState!.turn}: ${faction.name} — ${action.description}`);
+    }
+    // 전투가 있었으면 맵 갱신
+    if (actions.some(a => a.type === 'attack')) {
+      this.refreshTerritoryVisuals();
     }
   }
 
@@ -310,6 +324,44 @@ export class MapScene extends Phaser.Scene {
   public addLog(message: string) {
     this.gameState.log.push(message);
     this.events.emit('log-updated', this.gameState.log);
+  }
+
+  /** 아직 출제되지 않은 퀴즈를 무작위로 1개 선택한다. */
+  private getNextQuiz(): Quiz {
+    let availableQuizzes = QUIZZES.filter((quiz) => !this.shownQuizIds.has(quiz.id));
+
+    // 모든 문항을 소진하면 출제 기록을 초기화한다.
+    if (availableQuizzes.length === 0) {
+      this.shownQuizIds.clear();
+      availableQuizzes = [...QUIZZES];
+    }
+
+    const quiz = Phaser.Utils.Array.GetRandom(availableQuizzes);
+    this.shownQuizIds.add(quiz.id);
+    return quiz;
+  }
+
+  /** 영토 색상·병력 텍스트를 현재 상태에 맞게 갱신 */
+  public refreshTerritoryVisuals() {
+    for (const territory of this.gameState!.territories) {
+      const visual = this.territorySprites.get(territory.id);
+      if (!visual) continue;
+
+      const faction = this.gameState!.factions.find(f => f.id === territory.owner);
+      const color = faction
+        ? Phaser.Display.Color.IntegerToColor(faction.color).brighten(30).color
+        : 0x7a8594;
+
+      visual.base.setFillStyle(color, 0.9);
+      visual.glow.setFillStyle(color, 0.18);
+
+      // 병력 텍스트 갱신 (컨테이너의 마지막 텍스트)
+      const children = visual.container.list;
+      const garrisonText = children[children.length - 1] as Phaser.GameObjects.Text;
+      if (garrisonText?.setText) {
+        garrisonText.setText(`⚔️ ${(territory.garrison / 1000).toFixed(1)}k`);
+      }
+    }
   }
 
   public getGameState(): GameState | null {
