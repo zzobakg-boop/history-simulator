@@ -1,11 +1,16 @@
 import Phaser from 'phaser';
 import { QUIZZES } from '../data/quizzes';
 import type { Quiz } from '../data/quizzes';
+import { calculateTotalScore, getEndingGrade } from '../data/endings';
+import type { QuizStats } from '../data/endings';
 import { SCENARIO_CIVILIZATIONS } from '../data/scenario_civilizations';
 import type { GameState, Territory, Faction } from '../game/types';
 import { executeAITurn } from '../game/ai';
 import { decayAllRelations } from '../game/diplomacy';
 import { FACTION_ICON_MAP } from '../utils/svgIconLoader';
+
+/** 15턴 완결 */
+const MAX_TURNS = 15;
 
 interface MapSceneInitData {
   selectedFactionId?: string;
@@ -28,6 +33,12 @@ export class MapScene extends Phaser.Scene {
   private selectedFactionId: string = SCENARIO_CIVILIZATIONS.factions[0].id;
   private selectedTerritoryId: string | null = null;
   private shownQuizIds: Set<string> = new Set();
+
+  // 퀴즈 통계 (엔딩 점수용)
+  private quizCorrect = 0;
+  private quizTotal = 0;
+  private learnedConcepts: Set<string> = new Set();
+  private gameEnded = false;
 
   constructor() {
     super({ key: 'MapScene' });
@@ -443,6 +454,8 @@ export class MapScene extends Phaser.Scene {
   }
 
   public nextTurn() {
+    if (this.gameEnded) return;
+
     const factionIdx = this.gameState.factions.findIndex((f) => f.id === this.gameState.currentFaction);
     const nextIdx = (factionIdx + 1) % this.gameState.factions.length;
 
@@ -450,6 +463,13 @@ export class MapScene extends Phaser.Scene {
       this.gameState.turn++;
       const previousYear = this.gameState.year;
       this.gameState.year = this.calculateYear(this.gameState.turn);
+
+      // 15턴 초과 시 게임 종료
+      if (this.gameState.turn > MAX_TURNS) {
+        this.gameEnded = true;
+        this.triggerEnding();
+        return;
+      }
 
       for (const faction of this.gameState.factions) {
         const ownedTerritories = this.gameState.territories.filter((t) => t.owner === faction.id);
@@ -484,6 +504,45 @@ export class MapScene extends Phaser.Scene {
         this.doAITurn(nextFaction);
         this.nextTurn();
       });
+    }
+  }
+
+  /** 15턴 종료 후 엔딩 화면으로 전환 */
+  private triggerEnding() {
+    const player = this.gameState.factions.find((f) => f.isPlayer);
+    if (!player) return;
+
+    const territoryCount = this.gameState.territories.filter((t) => t.owner === player.id).length;
+    const totalScore = calculateTotalScore(
+      this.quizCorrect,
+      territoryCount,
+      player.resources.culture,
+      player.resources.technology,
+    );
+    const grade = getEndingGrade(totalScore);
+    const quizStats: QuizStats = {
+      correct: this.quizCorrect,
+      total: this.quizTotal,
+      learnedConcepts: [...this.learnedConcepts],
+    };
+
+    this.addLog(`턴 ${MAX_TURNS}: 게임이 종료되었습니다! 등급: ${grade.grade}`);
+    this.events.emit('game-ending', {
+      grade,
+      totalScore,
+      quizStats,
+      territoryCount,
+      culture: player.resources.culture,
+      technology: player.resources.technology,
+    });
+  }
+
+  /** 퀴즈 정답 기록 (UIScene에서 호출) */
+  public recordQuizResult(correct: boolean, textbookRef: string) {
+    this.quizTotal++;
+    if (correct) {
+      this.quizCorrect++;
+      this.learnedConcepts.add(textbookRef);
     }
   }
 

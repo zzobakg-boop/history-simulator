@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import type { Quiz } from '../data/quizzes';
+import type { EndingResult } from '../data/endings';
+import { CIVILIZATION_SUMMARY } from '../data/endings';
 import type { Territory, GameState, GameEvent, Faction, BattleResult } from '../game/types';
 import { getAttackableTargets, calculateBattle } from '../game/combat';
 import { getRelation, proposeTrade, proposeAlliance } from '../game/diplomacy';
@@ -29,6 +31,8 @@ export class UIScene extends Phaser.Scene {
   private battleModal!: Phaser.GameObjects.Container;
   private diplomacyPanel!: Phaser.GameObjects.Container;
   private tutorialPanel!: Phaser.GameObjects.Container;
+  private endingPanel!: Phaser.GameObjects.Container;
+  private summaryPanel!: Phaser.GameObjects.Container;
   private logPanel!: Phaser.GameObjects.Container;
   private logTexts: Phaser.GameObjects.Text[] = [];
   private quizCloseTimer?: Phaser.Time.TimerEvent;
@@ -66,6 +70,8 @@ export class UIScene extends Phaser.Scene {
     this.battleModal = this.add.container(640, 360).setVisible(false);
     this.diplomacyPanel = this.add.container(640, 360).setVisible(false);
     this.tutorialPanel = this.add.container(640, 360).setVisible(false);
+    this.endingPanel = this.add.container(640, 360).setVisible(false);
+    this.summaryPanel = this.add.container(640, 360).setVisible(false);
 
     // ── 하단 바 (y: 596~700) ──
     this.createLogPanel();
@@ -102,6 +108,9 @@ export class UIScene extends Phaser.Scene {
     });
     mapScene.events.on('menu-command', (digit: number) => {
       this.handleMenuCommand(digit);
+    });
+    mapScene.events.on('game-ending', (result: EndingResult) => {
+      this.showEndingScreen(result);
     });
 
     this.refreshLogPanel(false);
@@ -987,6 +996,9 @@ export class UIScene extends Phaser.Scene {
       const isCorrect = selectedAnswer === quiz.answer;
       const playerFaction = this.gameState.factions.find((f) => f.isPlayer);
 
+      // 퀴즈 결과를 MapScene에 기록 (엔딩 점수용)
+      (this.mapScene as any).recordQuizResult?.(isCorrect, quiz.textbookRef);
+
       if (isCorrect && playerFaction) {
         for (const [key, value] of Object.entries(quiz.reward)) {
           playerFaction.resources[key as keyof Faction['resources']] += value ?? 0;
@@ -1137,5 +1149,240 @@ export class UIScene extends Phaser.Scene {
     });
 
     this.tutorialPanel.add([btnBg, btnLabel]);
+  }
+
+  // ═══════════════════════════════════════
+  // 엔딩 화면 (15턴 종료)
+  // ═══════════════════════════════════════
+  private showEndingScreen(result: EndingResult) {
+    this.endingPanel.removeAll(true);
+    this.endingPanel.setVisible(true);
+
+    const overlay = this.add.rectangle(0, 0, 1280, 720, 0x000000, 0.8)
+      .setInteractive();
+    this.endingPanel.add(overlay);
+
+    const modal = this.add.rectangle(0, 0, 600, 520, COLORS.panel, 0.98)
+      .setStrokeStyle(3, COLORS.gold);
+    this.endingPanel.add(modal);
+
+    // 등급 색상
+    const gradeColors: Record<string, string> = {
+      S: '#FFD700', A: '#7CFFB2', B: '#88DDFF', C: '#FF8A8A',
+    };
+    const gradeColor = gradeColors[result.grade.grade] ?? '#ffffff';
+
+    // 등급 + 제목
+    const gradeText = this.add.text(0, -220, result.grade.grade, {
+      fontSize: '64px',
+      color: gradeColor,
+      fontFamily: 'Georgia, serif',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+    this.endingPanel.add(gradeText);
+
+    const titleText = this.add.text(0, -170, result.grade.title, {
+      fontSize: '24px',
+      color: gradeColor,
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.endingPanel.add(titleText);
+
+    // 총점
+    const scoreText = this.add.text(0, -135, `총점: ${result.totalScore}`, {
+      fontSize: '16px',
+      color: '#f0c040',
+      fontFamily: 'monospace',
+    }).setOrigin(0.5);
+    this.endingPanel.add(scoreText);
+
+    // 설명
+    const desc = this.add.text(0, -80, result.grade.description, {
+      fontSize: '14px',
+      color: '#dddddd',
+      fontFamily: 'sans-serif',
+      wordWrap: { width: 520 },
+      lineSpacing: 5,
+      align: 'center',
+    }).setOrigin(0.5, 0);
+    this.endingPanel.add(desc);
+
+    // 성적 상세
+    const quizRate = result.quizStats.total > 0
+      ? `${result.quizStats.correct}/${result.quizStats.total}`
+      : '0/0';
+    const statsLines = [
+      `📝 퀴즈 정답률: ${quizRate}`,
+      `🏰 보유 영토: ${result.territoryCount}개`,
+      `🎭 문화력: ${result.culture}`,
+      `🔬 기술력: ${result.technology}`,
+    ].join('\n');
+
+    const statsText = this.add.text(-250, 30, statsLines, {
+      fontSize: '14px',
+      color: '#a8b4cc',
+      fontFamily: 'sans-serif',
+      lineSpacing: 6,
+    });
+    this.endingPanel.add(statsText);
+
+    // 배운 핵심 개념
+    const conceptsTitle = this.add.text(50, 30, '📚 배운 핵심 개념:', {
+      fontSize: '13px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    });
+    this.endingPanel.add(conceptsTitle);
+
+    const concepts = result.quizStats.learnedConcepts.length > 0
+      ? result.quizStats.learnedConcepts.slice(0, 6).map((c) => `  · ${c}`).join('\n')
+      : '  (없음)';
+    const conceptsText = this.add.text(50, 50, concepts, {
+      fontSize: '12px',
+      color: '#88aacc',
+      fontFamily: 'sans-serif',
+      lineSpacing: 4,
+    });
+    this.endingPanel.add(conceptsText);
+
+    // 교과서 참조
+    const refText = this.add.text(0, 155, `📖 ${result.grade.textbookRef}`, {
+      fontSize: '12px',
+      color: '#88aacc',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.endingPanel.add(refText);
+
+    // 버튼들
+    const retryBg = this.add.rectangle(-100, 210, 180, 40, COLORS.button, 0.9)
+      .setStrokeStyle(1, COLORS.gold, 0.7)
+      .setInteractive({ useHandCursor: true });
+    const retryLabel = this.add.text(-100, 210, '🔄 다시 하기', {
+      fontSize: '15px',
+      color: '#ffffff',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+
+    retryBg.on('pointerover', () => retryBg.setFillStyle(COLORS.buttonHover));
+    retryBg.on('pointerout', () => retryBg.setFillStyle(COLORS.button));
+    retryBg.on('pointerdown', () => {
+      this.endingPanel.setVisible(false);
+      this.scene.stop('MapScene');
+      this.scene.stop('UIScene');
+      this.scene.start('TitleScene');
+    });
+
+    this.endingPanel.add([retryBg, retryLabel]);
+
+    const summaryBg = this.add.rectangle(100, 210, 180, 40, COLORS.button, 0.9)
+      .setStrokeStyle(1, COLORS.gold, 0.7)
+      .setInteractive({ useHandCursor: true });
+    const summaryLabel = this.add.text(100, 210, '📖 단원 요약 보기', {
+      fontSize: '15px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+
+    summaryBg.on('pointerover', () => summaryBg.setFillStyle(COLORS.buttonHover));
+    summaryBg.on('pointerout', () => summaryBg.setFillStyle(COLORS.button));
+    summaryBg.on('pointerdown', () => {
+      this.showSummaryScreen();
+    });
+
+    this.endingPanel.add([summaryBg, summaryLabel]);
+  }
+
+  // ═══════════════════════════════════════
+  // 단원 요약 (4대 문명 비교표)
+  // ═══════════════════════════════════════
+  private showSummaryScreen() {
+    this.summaryPanel.removeAll(true);
+    this.summaryPanel.setVisible(true);
+
+    const overlay = this.add.rectangle(0, 0, 1280, 720, 0x000000, 0.8)
+      .setInteractive();
+    this.summaryPanel.add(overlay);
+
+    const modal = this.add.rectangle(0, 0, 680, 480, COLORS.panel, 0.98)
+      .setStrokeStyle(3, COLORS.gold);
+    this.summaryPanel.add(modal);
+
+    const title = this.add.text(0, -210, '📖 4대 문명 비교표', {
+      fontSize: '22px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.summaryPanel.add(title);
+
+    const subtitle = this.add.text(0, -180, '공통점: ① 큰 강 유역 ② 문자 발명 ③ 국가 형성', {
+      fontSize: '13px',
+      color: '#88aacc',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+    this.summaryPanel.add(subtitle);
+
+    // 테이블 헤더
+    const headers = ['문명', '강', '지역', '특징'];
+    const colX = [-290, -200, -110, 80];
+    const colW = [80, 80, 120, 300];
+
+    headers.forEach((h, i) => {
+      const headerText = this.add.text(colX[i], -150, h, {
+        fontSize: '13px',
+        color: '#f0c040',
+        fontFamily: 'sans-serif',
+      });
+      this.summaryPanel.add(headerText);
+    });
+
+    // 구분선
+    const divider = this.add.rectangle(0, -140, 620, 1, COLORS.gold, 0.5);
+    this.summaryPanel.add(divider);
+
+    // 테이블 행
+    CIVILIZATION_SUMMARY.forEach((civ, i) => {
+      const y = -120 + i * 65;
+      const values = [civ.name, civ.river, civ.region, civ.features];
+
+      values.forEach((v, j) => {
+        const cellText = this.add.text(colX[j], y, v, {
+          fontSize: '12px',
+          color: '#dddddd',
+          fontFamily: 'sans-serif',
+          wordWrap: { width: colW[j] },
+          lineSpacing: 3,
+        });
+        this.summaryPanel.add(cellText);
+      });
+    });
+
+    // 핵심 인과 사슬
+    const chainText = this.add.text(0, 145, '핵심 인과 사슬: 강 → 홍수 → 비옥한 토양 → 농업 → 잉여 → 분업 → 도시 → 문자 → 국가 → 문명', {
+      fontSize: '13px',
+      color: '#f0c040',
+      fontFamily: 'sans-serif',
+      wordWrap: { width: 600 },
+      align: 'center',
+    }).setOrigin(0.5);
+    this.summaryPanel.add(chainText);
+
+    // 닫기 버튼
+    const closeBg = this.add.rectangle(0, 200, 120, 36, COLORS.button, 0.9)
+      .setStrokeStyle(1, 0x5588bb)
+      .setInteractive({ useHandCursor: true });
+    const closeLabel = this.add.text(0, 200, '닫기', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontFamily: 'sans-serif',
+    }).setOrigin(0.5);
+
+    closeBg.on('pointerover', () => closeBg.setFillStyle(COLORS.buttonHover));
+    closeBg.on('pointerout', () => closeBg.setFillStyle(COLORS.button));
+    closeBg.on('pointerdown', () => {
+      this.summaryPanel.setVisible(false);
+    });
+
+    this.summaryPanel.add([closeBg, closeLabel]);
   }
 }

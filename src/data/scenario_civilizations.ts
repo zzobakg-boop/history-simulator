@@ -2,13 +2,14 @@ import type { Scenario } from '../game/types';
 
 /**
  * 시나리오: 4대 문명의 경쟁
- * 교과서: 역사① Ⅰ단원 "문명의 발생과 고대 세계의 형성"
+ * 교과서: 역사① Ⅱ단원 "문명의 발생과 고대 세계의 형성"
+ * 교사가이드 E01~E03 기반 15턴 완결 구성
  */
 export const SCENARIO_CIVILIZATIONS: Scenario = {
   id: 'four-civilizations',
   title: '4대 문명의 경쟁',
   subtitle: '강 유역에서 시작된 인류 최초의 문명들',
-  textbookUnit: 'Ⅰ. 문명의 발생과 고대 세계의 형성',
+  textbookUnit: 'Ⅱ. 문명의 발생과 고대 세계의 형성',
   startYear: -3500,
   endYear: -500,
   turnYears: 100,  // 1턴 = 100년
@@ -124,221 +125,169 @@ export const SCENARIO_CIVILIZATIONS: Scenario = {
   ],
 
   events: [
-    // ── 턴 1~5: 문명 초기 ──
+    // ── 턴 1~3: 도입 — 문명 발생 조건 (인과사슬 1단계) ──
     {
-      id: 'irrigation_development',
+      id: 'river_gift',
       triggerTurn: 1,
-      title: '🌾 관개 기술의 발전',
-      description: '강 유역의 문명들이 물을 다스리는 기술을 발전시켰습니다.\n\n교과서: "큰 강 유역에서는 관개 농업이 발달하면서 잉여 생산물이 생겨났고, 이를 바탕으로 도시가 형성되었다."',
-      textbookRef: 'Ⅰ-1. 문명의 발생',
+      title: '🌊 강의 선물',
+      description: '매년 홍수가 찾아옵니다. 물이 빠진 뒤 비옥한 토양이 남습니다.\n\n교과서: "큰 강 유역에서는 홍수가 빠진 뒤 비옥한 토양이 남아 농업이 가능해졌다."',
+      textbookRef: '역사① Ⅱ단원 1차시',
       choices: [
-        { text: '대규모 관개 수로를 건설한다', effect: { food: 25, technology: 10, gold: -5 }, resultText: '농업 생산량이 비약적으로 증가하여 인구가 늘어났습니다!' },
-        { text: '기존 수로를 효율적으로 정비한다', effect: { food: 15, gold: 10 }, resultText: '안정적인 식량 공급이 이루어졌습니다.' },
+        { text: '관개 수로를 건설한다', effect: { food: 20, technology: 10, gold: -10 }, resultText: '관개 수로를 통해 물을 다스려 대규모 농업이 가능해졌습니다!' },
+        { text: '자연에 맡기고 채집을 병행한다', effect: { food: 10 }, resultText: '자연 범람에 의존하여 소규모 농업을 시작했습니다.' },
       ],
       triggered: false,
     },
     {
-      id: 'writing_invention',
+      id: 'agricultural_revolution',
       triggerTurn: 2,
-      title: '📜 문자의 발명',
-      description: '메소포타미아에서 쐐기 문자가, 이집트에서 상형 문자가 만들어졌습니다.\n\n교과서: "문자의 발명으로 기록이 가능해지면서 법률, 종교, 과학 등이 발달하였다."',
-      textbookRef: 'Ⅰ-1. 문명의 발생',
+      title: '🌾 농업 혁명',
+      description: '정착 생활이 시작되었습니다. 잉여 생산물이 쌓이고 있습니다.\n\n교과서: "농업 혁명으로 잉여 생산물이 생기면서 사회가 변화하기 시작했다."',
+      textbookRef: '역사① Ⅱ단원 1차시',
       choices: [
-        { text: '문자 교육에 투자한다', effect: { culture: 20, technology: 15 }, resultText: '문화력과 기술력이 크게 상승했습니다!' },
-        { text: '군사 기록에 활용한다', effect: { military: 15, technology: 10 }, resultText: '군사 전략이 체계화되었습니다.' },
+        { text: '농업 기술을 개발한다', effect: { food: 30, technology: 10 }, resultText: '새로운 농업 기술로 식량 생산이 비약적으로 증가했습니다!' },
+        { text: '목축을 강화한다', effect: { food: 15, military: 10 }, resultText: '가축 사육이 발달하여 식량과 군사력이 함께 성장했습니다.' },
       ],
       triggered: false,
     },
     {
-      id: 'pyramid_building',
+      id: 'division_of_labor',
       triggerTurn: 3,
-      title: '🏛️ 피라미드 건설',
-      description: '이집트에서 거대한 피라미드 건설이 시작되었습니다.\n\n교과서: "피라미드는 파라오의 강력한 왕권을 보여 주며, 높은 수준의 건축 기술과 수학적 지식을 반영한다."',
-      textbookRef: 'Ⅰ-1. 이집트 문명',
+      title: '👥 분업의 시작',
+      description: '잉여 식량 덕분에 모든 사람이 농사짓지 않아도 됩니다. 상인, 군인, 제사장 등 새로운 직업이 생겨납니다.\n\n교과서: "잉여 생산물이 생기자 분업이 이루어지고, 지배자와 피지배자로 나뉘는 계급이 나타났다."',
+      textbookRef: '역사① Ⅱ단원 1차시',
       choices: [
-        { text: '대규모 피라미드를 건설한다', effect: { culture: 30, food: -15, gold: -10 }, resultText: '후세에 길이 남을 위대한 건축물이 완성되었습니다!' },
-        { text: '규모를 줄이고 관개 시설에 투자한다', effect: { food: 20, culture: 10 }, resultText: '농업 생산량이 크게 증가했습니다.' },
+        { text: '장인·사제를 양성한다', effect: { culture: 20, technology: 10 }, resultText: '전문 장인과 사제가 등장하여 문화와 기술이 발전했습니다!' },
+        { text: '군사 계급을 강화한다', effect: { military: 20 }, resultText: '전문 군인 계급이 형성되어 군사력이 크게 성장했습니다.' },
       ],
       triggered: false,
     },
+
+    // ── 턴 4~6: 핵심 — 문명의 3요소 (인과사슬 2단계) ──
     {
-      id: 'indus_urban_planning',
+      id: 'birth_of_city',
       triggerTurn: 4,
-      title: '🏙️ 계획 도시 건설',
-      description: '인더스 문명에서 놀라울 정도로 정교한 도시 계획이 이루어졌습니다.\n\n교과서: "모헨조다로는 바둑판 모양의 도로, 상하수도 시설 등 뛰어난 도시 계획을 보여 준다."',
-      textbookRef: 'Ⅰ-1. 인더스 문명',
+      title: '🏙️ 도시의 탄생',
+      description: '사람들이 모여 살기 시작합니다. 도시가 형성됩니다.\n\n교과서: "문명의 3요소 — 도시, 문자, 국가. 많은 사람이 모여 도시를 이루었다."',
+      textbookRef: '역사① Ⅱ단원 1차시',
       choices: [
-        { text: '하수도 시스템을 더 확장한다', effect: { technology: 20, culture: 10 }, resultText: '위생 환경이 개선되어 인구가 증가했습니다!' },
-        { text: '교역 항구를 건설한다', effect: { gold: 25, technology: 5 }, resultText: '해상 교역이 활성화되었습니다.' },
+        { text: '성벽을 건설하여 도시를 보호한다', effect: { food: -5, gold: -5, military: 10 }, resultText: '견고한 성벽으로 도시가 안전해졌습니다!' },
+        { text: '시장을 개설하여 교역을 촉진한다', effect: { gold: 20, technology: 5 }, resultText: '시장이 열려 상업이 활성화되었습니다!' },
       ],
       triggered: false,
     },
     {
-      id: 'hammurabi_code',
+      id: 'invention_of_writing',
       triggerTurn: 5,
-      title: '⚖️ 함무라비 법전',
-      description: '바빌로니아의 함무라비 왕이 282조의 법전을 만들었습니다.\n\n교과서: "함무라비 법전은 현존하는 가장 오래된 성문법 중 하나로, 사회 질서를 유지하기 위해 만들어졌다."',
-      textbookRef: 'Ⅰ-1. 메소포타미아 문명',
+      title: '📜 문자의 발명',
+      description: '기록의 필요성이 커집니다. 각 문명에서 고유한 문자가 탄생합니다.\n\n' +
+        '메소포타미아: 젖은 점토에 갈대를 찍어 쐐기문자를 만들었습니다.\n' +
+        '이집트: 파피루스 위에 상형문자를 기록했습니다.\n' +
+        '인더스: 아직 해독되지 않은 독자적 문자를 사용했습니다.\n' +
+        '황허: 거북 등껍질과 소뼈에 갑골문자를 새겼습니다.',
+      textbookRef: '역사① Ⅱ단원 1차시',
       choices: [
-        { text: '법을 엄격하게 적용한다', effect: { gold: 10, military: 10, culture: -5 }, resultText: '질서가 잡혔지만 백성들의 불만도 생겼습니다.' },
-        { text: '법을 통해 교역을 촉진한다', effect: { gold: 20, culture: 10 }, resultText: '상업이 크게 발달했습니다!' },
+        { text: '문자 체계를 정비하고 교육한다', effect: { culture: 20, technology: 15 }, resultText: '문자가 체계화되어 법률, 종교, 과학이 기록되기 시작했습니다!' },
+        { text: '구전 전통을 유지한다', effect: { culture: 10 }, resultText: '구전 전통이 이어져 풍부한 이야기가 전해졌습니다.' },
+      ],
+      triggered: false,
+    },
+    {
+      id: 'formation_of_state',
+      triggerTurn: 6,
+      title: '⚖️ 국가의 형성',
+      description: '권력이 집중되고 법이 만들어집니다. 왕이 등장하여 국가를 다스립니다.\n\n교과서: "관개 농업을 위해 수백 명이 협력해야 했고, 그 협력을 지휘할 지도자가 필요했다. 이것이 왕의 시작이다."',
+      textbookRef: '역사① Ⅱ단원 1차시',
+      choices: [
+        { text: '법전을 편찬하여 질서를 세운다', effect: { culture: 20, gold: 10 }, resultText: '성문법이 만들어져 사회 질서가 확립되었습니다!' },
+        { text: '군사 정복을 확대한다', effect: { military: 20 }, resultText: '강력한 군사력으로 영토를 넓혔습니다.' },
       ],
       triggered: false,
     },
 
-    // ── 턴 6~10: 문명 발전기 ──
+    // ── 턴 7~9: 비교 — 4대 문명 특징 ──
     {
-      id: 'ziggurat_construction',
+      id: 'flower_of_civilization',
       triggerTurn: 7,
-      title: '🛕 지구라트 건설',
-      description: '메소포타미아의 도시들에 거대한 신전 탑 지구라트가 세워졌습니다.\n\n교과서: "메소포타미아 사람들은 다신교를 믿었으며, 도시마다 수호신을 모시는 신전인 지구라트를 세웠다."',
-      textbookRef: 'Ⅰ-1. 메소포타미아 문명',
+      title: '🏛️ 문명의 꽃',
+      description: '각 문명의 대표적 업적이 나타납니다.\n\n' +
+        '메소포타미아: 함무라비 법전 — "눈에는 눈, 이에는 이" 원칙. 단, 신분에 따라 처벌이 달랐습니다.\n' +
+        '이집트: 피라미드 — 파라오의 강력한 왕권과 내세 신앙의 상징.\n' +
+        '인더스: 모헨조다로 계획도시 — 바둑판 도로와 상하수도 시설.\n' +
+        '황허: 갑골문자와 청동 제기 — 신권 정치의 증거.',
+      textbookRef: '역사① Ⅱ단원 2~3차시',
       choices: [
-        { text: '도시마다 거대한 지구라트를 세운다', effect: { culture: 25, gold: -10, food: -5 }, resultText: '신관 계급이 강화되고 종교 문화가 번성했습니다!' },
-        { text: '작은 규모로 짓고 남은 자원을 비축한다', effect: { culture: 10, gold: 10 }, resultText: '실용적인 판단으로 도시 재정이 안정되었습니다.' },
+        { text: '문화 업적에 투자한다', effect: { culture: 25, technology: 10, gold: -10 }, resultText: '후세에 길이 남을 위대한 업적이 탄생했습니다!' },
+        { text: '실용적 발전에 집중한다', effect: { food: 15, gold: 15 }, resultText: '실용적 발전으로 경제가 안정되었습니다.' },
       ],
       triggered: false,
     },
     {
-      id: 'bronze_age',
+      id: 'trade_routes',
       triggerTurn: 8,
-      title: '⚒️ 청동기의 보급',
-      description: '청동 도구와 무기가 널리 보급되면서 사회에 큰 변화가 일어났습니다.\n\n교과서: "청동기의 사용으로 농업 생산력이 높아지고, 강력한 무기를 가진 지배 계급이 등장하여 계급 사회가 형성되었다."',
-      textbookRef: 'Ⅰ-1. 문명의 발생',
+      title: '⛵ 교역로의 개척',
+      description: '다른 문명과의 교류가 시작됩니다. 메소포타미아와 인더스 사이 해상 교역이 활발합니다.\n\n교과서: "고대 문명들은 교역을 통해 서로 영향을 주고받으며 발전하였다."',
+      textbookRef: '역사① Ⅱ단원 2차시',
       choices: [
-        { text: '청동 무기 생산에 집중한다', effect: { military: 25, technology: 10 }, resultText: '강력한 군대를 갖추어 주변 세력을 압도했습니다!' },
-        { text: '청동 농기구 보급에 집중한다', effect: { food: 20, technology: 10 }, resultText: '농업 생산력이 크게 향상되었습니다.' },
+        { text: '적극적으로 교역한다', effect: { gold: 20, culture: 10 }, resultText: '교역을 통해 부와 문화가 함께 성장했습니다!' },
+        { text: '폐쇄 정책을 유지한다', effect: { military: 10 }, resultText: '외부 위협으로부터 문명을 지켰습니다.' },
       ],
       triggered: false,
     },
     {
-      id: 'nile_flood_astronomy',
+      id: 'religion_and_thought',
       triggerTurn: 9,
-      title: '🌊 나일강 범람과 천문학',
-      description: '이집트인들이 나일강의 주기적 범람을 예측하기 위해 천문학을 발전시켰습니다.\n\n교과서: "이집트인들은 나일강의 범람 시기를 알기 위해 천문학을 발달시켰고, 태양력을 만들었다."',
-      textbookRef: 'Ⅰ-1. 이집트 문명',
+      title: '🙏 종교와 사상',
+      description: '신앙 체계가 형성됩니다.\n\n' +
+        '메소포타미아: 다신교, 현세적 종교관. 지구라트(계단식 신전) 건설.\n' +
+        '이집트: 파라오=살아있는 신(신권 정치), 내세적 종교관. 미라와 사자의 서.\n' +
+        '인더스: 아리아인 이주 후 카스트제 형성. 브라만교 발달.\n' +
+        '황허: 갑골 점술로 신의 뜻을 묻는 신권 정치. 조상 숭배.',
+      textbookRef: '역사① Ⅱ단원 2~3차시',
       choices: [
-        { text: '태양력 체계를 확립하고 보급한다', effect: { technology: 20, culture: 15 }, resultText: '정확한 달력으로 농사 시기를 예측할 수 있게 되었습니다!' },
-        { text: '범람 시기에 맞춘 대규모 경작지를 개발한다', effect: { food: 25, gold: 5 }, resultText: '비옥한 토양을 최대한 활용하여 풍요를 누렸습니다.' },
-      ],
-      triggered: false,
-    },
-    {
-      id: 'oracle_bone_script',
-      triggerTurn: 10,
-      title: '🦴 갑골 문자와 점술',
-      description: '황허 문명의 상(殷)나라에서 거북의 등껍질과 소의 뼈에 글자를 새겨 점을 쳤습니다.\n\n교과서: "상(은)은 갑골에 문자를 새겨 점을 치는 신권 정치를 하였다."',
-      textbookRef: 'Ⅰ-1. 황허 문명',
-      choices: [
-        { text: '점술을 국가 의사 결정에 적극 활용한다', effect: { culture: 20, military: 10 }, resultText: '신권 정치가 강화되어 왕의 권위가 높아졌습니다!' },
-        { text: '갑골 문자를 기록 체계로 발전시킨다', effect: { technology: 20, culture: 10 }, resultText: '문자 체계가 정교해져 행정이 효율화되었습니다.' },
+        { text: '종교를 체계화하여 사회를 통합한다', effect: { culture: 25, military: 5, gold: -5 }, resultText: '종교가 사회 통합의 핵심 수단이 되었습니다!' },
+        { text: '다양한 신앙을 허용한다', effect: { culture: 15, gold: 15 }, resultText: '종교적 관용으로 교류가 활발해졌습니다.' },
       ],
       triggered: false,
     },
 
-    // ── 턴 11~15: 중기 ──
+    // ── 턴 10~12: 활동 — 전투/외교/교역 자유 턴 (이벤트 없음, 퀴즈는 계속) ──
+    // 턴 10~12는 이벤트 없이 자유 플레이 + 퀴즈
+
+    // ── 턴 13~15: 정리 — 문명 성적표 + 엔딩 ──
     {
-      id: 'maritime_trade_network',
-      triggerTurn: 12,
-      title: '⛵ 해상 교역망 형성',
-      description: '메소포타미아와 인더스 문명 사이에 활발한 해상 교역로가 열렸습니다.\n\n교과서: "메소포타미아와 인더스 문명은 해상 교역을 통해 서로 영향을 주고받았다."',
-      textbookRef: 'Ⅰ-1. 문명 간 교류',
+      id: 'crisis_of_civilization',
+      triggerTurn: 13,
+      title: '⚔️ 문명의 위기',
+      description: '외부 세력의 침입 또는 내부 분열로 문명이 위기에 처합니다.\n\n' +
+        '메소포타미아: 히타이트의 철제 무기 앞에 무너질 위험.\n' +
+        '이집트: 외부 침입으로 파라오의 권위가 흔들립니다.\n' +
+        '인더스: 기후 변화와 외부 세력으로 도시가 쇠퇴합니다.\n' +
+        '황허: 주(周)나라의 봉건제가 흔들리고 춘추전국 시대가 다가옵니다.',
+      textbookRef: '역사① Ⅱ단원 2~3차시',
       choices: [
-        { text: '대규모 무역 선단을 조직한다', effect: { gold: 30, technology: 10, military: -5 }, resultText: '원거리 교역으로 막대한 부를 축적했습니다!' },
-        { text: '교역품의 품질을 높여 수출한다', effect: { gold: 15, culture: 15 }, resultText: '문명의 명성이 교역로를 따라 퍼져나갔습니다.' },
+        { text: '방어를 강화하여 문명을 지킨다', effect: { military: 20, gold: -10 }, resultText: '외부 위협에 맞서 문명을 수호했습니다!' },
+        { text: '외교로 해결한다', effect: { culture: 15, gold: 10 }, resultText: '외교적 수완으로 위기를 넘겼습니다.' },
       ],
       triggered: false,
     },
     {
-      id: 'polytheism_to_monotheism',
+      id: 'legacy_of_civilization',
       triggerTurn: 14,
-      title: '🙏 종교의 발전',
-      description: '각 문명에서 다양한 종교가 발달하고 있습니다. 자연 현상에 대한 경외심에서 시작된 다신교가 체계화되었습니다.\n\n교과서: "고대 문명에서는 자연 현상을 신격화한 다신교가 일반적이었으며, 이후 일신교의 흐름도 나타났다."',
-      textbookRef: 'Ⅰ-1. 고대 세계의 종교',
+      title: '📚 유산의 정리',
+      description: '우리 문명이 후대에 남긴 것은 무엇일까요?\n\n' +
+        '메소포타미아: 쐐기문자, 함무라비 법전, 60진법(시계), 태음력\n' +
+        '이집트: 상형문자, 피라미드, 미라, 태양력(365일), 기하학\n' +
+        '인더스: 계획도시, 도량형 통일, 미해독 문자\n' +
+        '황허: 갑골문자(한자의 기원), 청동기 문화, 봉건제, 천명 사상',
+      textbookRef: '역사① Ⅱ단원 1~3차시',
       choices: [
-        { text: '신관 계급을 강화하여 종교를 체계화한다', effect: { culture: 25, military: 5, gold: -5 }, resultText: '종교가 사회 통합의 핵심 수단이 되었습니다!' },
-        { text: '다양한 신앙을 허용하여 교류를 촉진한다', effect: { culture: 15, gold: 15 }, resultText: '종교적 관용으로 다른 문명과의 교류가 활발해졌습니다.' },
+        { text: '문화유산을 보존하고 기록한다', effect: { culture: 20, technology: 10 }, resultText: '문명의 유산이 후대에 길이 전해졌습니다!' },
+        { text: '새로운 발전 방향을 모색한다', effect: { technology: 20, gold: 10 }, resultText: '기존 유산을 바탕으로 새로운 도약을 준비했습니다.' },
       ],
       triggered: false,
     },
-    {
-      id: 'caste_system',
-      triggerTurn: 15,
-      title: '🔺 카스트 제도의 형성',
-      description: '인더스 문명이 쇠퇴한 뒤, 아리아인이 들어오면서 엄격한 신분 제도가 만들어졌습니다.\n\n교과서: "아리아인은 카스트라는 엄격한 신분 제도를 만들어 브라만(사제), 크샤트리아(무사), 바이샤(평민), 수드라(노예) 등으로 나누었다."',
-      textbookRef: 'Ⅰ-1. 인도의 고대 문명',
-      choices: [
-        { text: '카스트 제도를 도입하여 사회를 안정시킨다', effect: { military: 15, culture: 10, food: -5 }, resultText: '사회 질서가 확립되었지만 하층민의 불만이 쌓였습니다.' },
-        { text: '기존 인더스 전통을 유지하며 신분을 유연하게 한다', effect: { culture: 15, gold: 10 }, resultText: '다양한 계층의 교류로 상업이 발달했습니다.' },
-      ],
-      triggered: false,
-    },
-
-    // ── 턴 16~20: 변혁기 ──
-    {
-      id: 'indus_decline',
-      triggerTurn: 17,
-      title: '💨 인더스 문명의 쇠퇴',
-      description: '한때 번성했던 인더스 문명이 급격히 쇠퇴하기 시작합니다.\n\n교과서: "인더스 문명은 기원전 1500년경 급격히 쇠퇴하였는데, 기후 변화, 홍수, 외부 세력의 침입 등이 원인으로 추정된다."',
-      textbookRef: 'Ⅰ-1. 인더스 문명',
-      choices: [
-        { text: '새로운 정착지를 찾아 이주한다', effect: { food: 10, technology: 5, military: -10 }, resultText: '갠지스강 유역으로 이주하여 새로운 터전을 마련했습니다.' },
-        { text: '도시를 재건하고 방어를 강화한다', effect: { military: 15, gold: -10 }, resultText: '도시를 지키기 위해 자원을 집중했습니다.' },
-      ],
-      triggered: false,
-    },
-    {
-      id: 'shang_to_zhou',
-      triggerTurn: 19,
-      title: '⚔️ 은(殷) 멸망과 주(周) 건국',
-      description: '주(周)나라 무왕이 은(상)나라를 무너뜨리고 새 왕조를 세웠습니다.\n\n교과서: "주(周)는 봉건제를 실시하여 왕족과 공신에게 토지를 나누어 다스리게 하였다."',
-      textbookRef: 'Ⅰ-1. 황허 문명',
-      choices: [
-        { text: '봉건제를 도입하여 영토를 나눠 다스린다', effect: { gold: 15, culture: 15, military: -5 }, resultText: '봉건제로 광대한 영토를 효과적으로 통치했습니다!' },
-        { text: '중앙집권을 강화하여 왕권을 높인다', effect: { military: 20, culture: 5, gold: -5 }, resultText: '강력한 왕권으로 신속한 의사 결정이 가능해졌습니다.' },
-      ],
-      triggered: false,
-    },
-    {
-      id: 'phoenician_alphabet',
-      triggerTurn: 20,
-      title: '🔤 페니키아 알파벳의 전파',
-      description: '지중해 동쪽 해안의 페니키아 상인들이 간편한 표음 문자 알파벳을 만들어 퍼뜨렸습니다.\n\n교과서: "페니키아인들은 알파벳을 만들었는데, 이것이 그리스를 거쳐 오늘날 로마자(라틴 문자)의 기원이 되었다."',
-      textbookRef: 'Ⅰ-1. 지중해 문명',
-      choices: [
-        { text: '알파벳을 도입하여 행정 효율을 높인다', effect: { technology: 20, culture: 10 }, resultText: '간편한 문자 체계로 문서 행정이 혁신되었습니다!' },
-        { text: '기존 문자 전통을 고수한다', effect: { culture: 15, military: 5 }, resultText: '전통 문자의 깊이가 더해져 문화적 정체성이 강화되었습니다.' },
-      ],
-      triggered: false,
-    },
-
-    // ── 턴 21~25: 후기 ──
-    {
-      id: 'iron_age',
-      triggerTurn: 22,
-      title: '🗡️ 철기 시대의 도래',
-      description: '히타이트가 독점하던 철기 제조 기술이 각지로 퍼져나갔습니다.\n\n교과서: "철기의 보급으로 농업 생산력이 더욱 높아졌고, 강력한 무기를 갖춘 대제국이 등장하는 배경이 되었다."',
-      textbookRef: 'Ⅰ-1. 고대 세계의 변화',
-      choices: [
-        { text: '철제 무기 대량 생산에 착수한다', effect: { military: 30, technology: 15, gold: -10 }, resultText: '철기 군대로 주변 세력을 압도했습니다!' },
-        { text: '철제 농기구를 보급한다', effect: { food: 25, technology: 10 }, resultText: '농업 혁명으로 인구가 급증했습니다.' },
-      ],
-      triggered: false,
-    },
-
-    // ── 턴 26~30: 말기 ──
-    {
-      id: 'grand_trade_route',
-      triggerTurn: 26,
-      title: '🐫 대규모 교역로 완성',
-      description: '4대 문명을 잇는 교역로가 체계화되어 물자와 문화가 활발히 오갔습니다.\n\n교과서: "고대 문명들은 교역을 통해 서로 영향을 주고받으며 발전하였다."',
-      textbookRef: 'Ⅰ-1. 문명 간 교류',
-      choices: [
-        { text: '교역 거점 도시를 대대적으로 육성한다', effect: { gold: 30, culture: 10 }, resultText: '교역 중심지로 성장하여 엄청난 부를 축적했습니다!' },
-        { text: '교역로 경비를 강화하여 안전을 확보한다', effect: { military: 15, gold: 15 }, resultText: '안전한 교역로로 상인들이 몰려들었습니다.' },
-      ],
-      triggered: false,
-    },
+    // 턴 15: 게임 종료 — MapScene에서 자동 처리
   ],
 
   victoryConditions: [
